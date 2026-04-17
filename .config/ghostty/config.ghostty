@@ -1,0 +1,52 @@
+# =============================================================================
+# UI & Transparency
+# =============================================================================
+# Sets the background opacity (0.6 opacity = 60% opaque / 40% transparent).
+# If you meant 60% transparent, change this to 0.4.
+background-opacity = 0.9
+
+# Adds a frosted glass blur effect behind the transparent window (macOS specific)
+background-blur-radius = 20
+
+# A popular, eye-friendly dark theme built into Ghostty
+theme = Ayu Mirage
+
+# =============================================================================
+# Fonts & Typography
+# =============================================================================
+# JetBrains Mono or Fira Code are highly recommended for programming and CLI tools.
+font-family = "JetBrains Mono"
+font-size = 14
+
+# Essential for modern terminal prompts (like p10k) and terminal UI tools.
+# Ghostty handles nerdfonts natively, but enabling this ensures strict adherence.
+custom-shader-animation = true
+
+# =============================================================================
+# Window Configuration
+# =============================================================================
+
+
+# Adds breathing room around your text so it doesn't hug the window edges
+window-padding-x = 12
+window-padding-y = 12
+
+# =============================================================================
+# macOS Specific Behavior (Crucial)
+# =============================================================================
+# This is arguably the most important setting for macOS. 
+# It allows you to use the Option (Alt) key for standard terminal shortcuts,
+# like Option+Left/Right to jump between words in zsh.
+macos-option-as-alt = true
+
+# =============================================================================
+# Cursor & Mouse
+# =============================================================================
+cursor-style = bar
+cursor-style-blink = true
+
+# Hides the mouse pointer while you are typing
+mouse-hide-while-typing = true
+
+shell-integration = zsh
+shell-integration-features = ssh-env
