@@ -99,6 +99,18 @@ Then run `direnv allow`. Direnv will load the secrets into memory only when ente
   * `b` $\rightarrow$ `bao`
   * `p` $\rightarrow$ `pass`
 
+### 4. OS Keychain & Passphrase Remembering
+Never get repeatedly prompted in the terminal for GPG or SSH passphrases:
+* **GPG (`gpg-agent.conf`)**:
+  * Configured with [`scripts/pinentry-wrapper.sh`](scripts/pinentry-wrapper.sh).
+  * Automatically detects graphical sessions and uses native GUI pinentry (`pinentry-qt` with KWallet on KDE, `pinentry-gnome3` on GNOME, `pinentry-mac` with Keychain on macOS).
+  * Offers a **"Save in password manager / Keychain"** checkbox so passphrases only need to be entered once.
+  * Falls back to `pinentry-curses` in headless, remote SSH, or pure TTY sessions.
+* **SSH & Git Signing (`~/.ssh/config`)**:
+  * `AddKeysToAgent yes` automatically caches unlocked private keys in `ssh-agent`.
+  * On Linux (KDE), `ksshaskpass` provides a native KWallet prompt to remember SSH passphrases.
+  * On macOS, `UseKeychain yes` remembers keys in Apple Keychain.
+
 ---
 
 ## 🛡️ Security Baseline & Hardening

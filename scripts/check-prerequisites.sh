@@ -49,6 +49,8 @@ add_result() {
 
     if [ "$status" = "ok" ]; then
         INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
+    elif [ "$status" = "warn" ]; then
+        INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
     else
         MISSING_COUNT=$((MISSING_COUNT + 1))
     fi
@@ -124,6 +126,38 @@ else
     MISSING_PACMAN+=("openbao")
     MISSING_APT+=("openbao")
     MISSING_NAMES+=("OpenBao / Vault CLI")
+fi
+
+# OS Keychain integration for GPG
+if [ "$OS" = "Darwin" ]; then
+    if [ -x "/opt/homebrew/bin/pinentry-mac" ] || [ -x "/usr/local/bin/pinentry-mac" ]; then
+        add_result "Secrets & Vault Management" "ok" "Pinentry-Mac (Keychain GUI)" "Installed"
+    else
+        add_result "Secrets & Vault Management" "missing" "Pinentry-Mac (Keychain GUI)" "Not installed"
+        MISSING_BREW+=("pinentry-mac")
+        MISSING_NAMES+=("Pinentry-Mac (Keychain GUI for GPG)")
+    fi
+else
+    if command -v pinentry-qt &>/dev/null; then
+        add_result "Secrets & Vault Management" "ok" "Pinentry-Qt (KWallet GUI)" "$(command -v pinentry-qt)"
+    elif command -v pinentry-gnome3 &>/dev/null; then
+        add_result "Secrets & Vault Management" "ok" "Pinentry-Gnome3 (Keyring GUI)" "$(command -v pinentry-gnome3)"
+    else
+        add_result "Secrets & Vault Management" "missing" "GUI Pinentry (KWallet/Keyring)" "Not installed"
+        MISSING_PACMAN+=("pinentry")
+        MISSING_APT+=("pinentry-gnome3")
+        MISSING_NAMES+=("GUI Pinentry (pinentry-qt or pinentry-gnome3)")
+    fi
+fi
+
+# KDE Plasma SSH Askpass
+if [[ "${XDG_CURRENT_DESKTOP:-}" =~ [Kk][Dd][Ee] ]]; then
+    if command -v ksshaskpass &>/dev/null; then
+        add_result "Secrets & Vault Management" "ok" "Ksshaskpass (SSH KWallet GUI)" "$(command -v ksshaskpass)"
+    else
+        add_result "Secrets & Vault Management" "warn" "Ksshaskpass (SSH KWallet GUI)" "Not installed (optional for SSH)"
+        MISSING_PACMAN+=("ksshaskpass")
+    fi
 fi
 
 # 5. Package Managers

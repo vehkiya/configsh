@@ -106,6 +106,10 @@ link_file "$DOTFILES_DIR/.config/ghostty/config" "$HOME/.config/ghostty/config"
 # Link direnvrc (secret helpers for OpenBao/Vault & pass)
 link_file "$DOTFILES_DIR/.config/direnv/direnvrc" "$HOME/.config/direnv/direnvrc"
 
+# Link pinentry-wrapper (adaptive GUI/CLI with OS keychain support)
+chmod +x "$DOTFILES_DIR/scripts/pinentry-wrapper.sh"
+link_file "$DOTFILES_DIR/scripts/pinentry-wrapper.sh" "$HOME/.local/bin/pinentry-wrapper"
+
 # macOS Ghostty alternative location support
 if [ "$OS" = "Darwin" ]; then
     GHOSTTY_MAC_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
@@ -143,6 +147,7 @@ SECRET_DIRS=(
     "$HOME/.config/gh"
     "$HOME/.gemini/config"
     "$HOME/.password-store"
+    "$HOME/.gnupg"
 )
 
 for dir in "${SECRET_DIRS[@]}"; do
@@ -169,6 +174,7 @@ SECRET_FILES=(
     "$HOME/.zshrc.local"
     "$HOME/.vault-token"
     "$HOME/.bao-token"
+    "$HOME/.gnupg/gpg-agent.conf"
 )
 
 # Also include any private keys in ~/.ssh
@@ -258,6 +264,53 @@ EOF
         success "Ghostty systemd service not present; skipping override."
     fi
     echo ""
+fi
+
+# -----------------------------------------------------------------------------
+# 6. GPG Agent & OS Keychain Integration
+# -----------------------------------------------------------------------------
+info "6. Configuring GPG agent & OS keychain integration..."
+
+mkdir -p "$HOME/.gnupg"
+chmod 700 "$HOME/.gnupg"
+GPG_AGENT_CONF="$HOME/.gnupg/gpg-agent.conf"
+
+if [ ! -f "$GPG_AGENT_CONF" ] || ! grep -q "pinentry-wrapper" "$GPG_AGENT_CONF" 2>/dev/null; then
+    cat <<EOF > "$GPG_AGENT_CONF"
+# Managed by configsh - GPG Agent & OS Keychain Integration
+pinentry-program $HOME/.local/bin/pinentry-wrapper
+default-cache-ttl 86400
+max-cache-ttl 2592000
+EOF
+    chmod 600 "$GPG_AGENT_CONF"
+    success "Configured gpg-agent with pinentry-wrapper (OS keychain integration)"
+    gpgconf --reload gpg-agent 2>/dev/null || true
+else
+    chmod 600 "$GPG_AGENT_CONF"
+    success "gpg-agent already configured with pinentry-wrapper"
+fi
+
+# Enable systemd ssh-agent socket on Linux
+if [ "$OS" = "Linux" ] && command -v systemctl &>/dev/null; then
+    systemctl --user enable --now ssh-agent.socket 2>/dev/null || true
+    success "Enabled systemd ssh-agent socket"
+fi
+
+# Ensure AddKeysToAgent is enabled in ~/.ssh/config
+if [ -f "$HOME/.ssh/config" ]; then
+    if ! grep -q "AddKeysToAgent" "$HOME/.ssh/config" 2>/dev/null; then
+        cat <<'EOF' >> "$HOME/.ssh/config"
+
+# Automatically cache unlocked keys in ssh-agent
+Host *
+    AddKeysToAgent yes
+EOF
+        if [ "$OS" = "Darwin" ]; then
+            echo "    UseKeychain yes" >> "$HOME/.ssh/config"
+        fi
+        chmod 600 "$HOME/.ssh/config"
+        success "Configured 'AddKeysToAgent yes' in ~/.ssh/config"
+    fi
 fi
 
 echo -e "\n${GREEN}${BOLD}Setup completed successfully!${RESET}"

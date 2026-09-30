@@ -54,6 +54,26 @@ fi
 # Language environment
 export LANG="en_US.UTF-8"
 
+# GPG & SSH Agent Environment (OS Keychain integration)
+export GPG_TTY="${GPG_TTY:-$(tty 2>/dev/null || echo '')}"
+
+# SSH Agent Socket (systemd user socket on Linux, launchd on macOS)
+if [[ -z "$SSH_AUTH_SOCK" ]]; then
+  if [[ -S "${XDG_RUNTIME_DIR:-/run/user/$UID}/ssh-agent.socket" ]]; then
+    export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$UID}/ssh-agent.socket"
+  elif [[ -S "${XDG_RUNTIME_DIR:-/run/user/$UID}/gcr/ssh" ]]; then
+    export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR:-/run/user/$UID}/gcr/ssh"
+  fi
+fi
+
+# SSH Askpass (GUI password prompt for KWallet / Keyring)
+if [[ -n "$DISPLAY" || -n "$WAYLAND_DISPLAY" ]]; then
+  if command -v ksshaskpass &>/dev/null; then
+    export SSH_ASKPASS="$(command -v ksshaskpass)"
+    export SSH_ASKPASS_REQUIRE="prefer"
+  fi
+fi
+
 # Editor configuration
 if [[ -n "$SSH_CONNECTION" ]]; then
   export EDITOR="vim"
