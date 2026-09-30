@@ -1,137 +1,66 @@
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
-
 # Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time Oh My Zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="half-life" # set by `omz`
+# Theme: Disabled because Starship manages the prompt
+ZSH_THEME=""
 
-# Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause zsh to load
-# a theme from this variable instead of looking in $ZSH/themes/
-# If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+# Oh My Zsh Update settings
+zstyle ':omz:update' mode auto
+zstyle ':omz:update' frequency 3
 
-# Uncomment the following line to use case-sensitive completion.
-# CASE_SENSITIVE="true"
+# Disable command auto-correction
+ENABLE_CORRECTION="false"
 
-# Uncomment the following line to use hyphen-insensitive completion.
-# Case-sensitive completion must be off. _ and - will be interchangeable.
-# HYPHEN_INSENSITIVE="true"
-
-# Uncomment one of the following lines to change the auto-update behavior
-# zstyle ':omz:update' mode disabled  # disable automatic updates
-zstyle ':omz:update' mode auto      # update automatically without asking
-# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
-
-# Uncomment the following line to change how often to auto-update (in days).
-zstyle ':omz:update' frequency 6
-
-# Uncomment the following line if pasting URLs and other text is messed up.
-# DISABLE_MAGIC_FUNCTIONS="true"
-
-# Uncomment the following line to disable colors in ls.
-# DISABLE_LS_COLORS="true"
-
-# Uncomment the following line to disable auto-setting terminal title.
-# DISABLE_AUTO_TITLE="true"
-
-# Uncomment the following line to enable command auto-correction.
-ENABLE_CORRECTION="true"
-
-# Uncomment the following line to display red dots whilst waiting for completion.
-# You can also set it to another string to have that shown instead of the default red dots.
-# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
-# Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
-# COMPLETION_WAITING_DOTS="true"
-
-# Uncomment the following line if you want to disable marking untracked files
-# under VCS as dirty. This makes repository status check for large repositories
-# much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
-
-# Uncomment the following line if you want to change the command execution time
-# stamp shown in the history command output.
-# You can set one of the optional three formats:
-# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# or set a custom format using the strftime function format specifications,
-# see 'man strftime' for details.
-# HIST_STAMPS="mm/dd/yyyy"
-
-# Would you like to use another custom folder than $ZSH/custom?
-# ZSH_CUSTOM=/path/to/new-custom-folder
-
-# Which plugins would you like to load?
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
+# Cross-platform plugins
 plugins=(
-    git
-    # -- Docker --
-    docker
-    docker-compose
-    # -- Kubernetes --
-    kubectl
-    kubectx
-    helm
-    # -- Java/Kotlin --
-    gradle
-    mvn
-    spring
-    # -- Node.js --
-    node
-    npm
-    macos
-    zsh-autosuggestions
-    zsh-syntax-highlighting
+  git
+  rsync
+  golang
+  docker
+  docker-compose
+  kubectl
+  kubectx
+  helm
+  node
+  npm
+  nvm
+  emoji-clock
+  zsh-autosuggestions
+  zsh-syntax-highlighting
 )
 
-source $ZSH/oh-my-zsh.sh
+# OS-specific plugins
+if [[ "$(uname)" == "Darwin" ]]; then
+  plugins+=(macos)
+elif [[ "$(uname)" == "Linux" ]]; then
+  command -v pacman &>/dev/null && plugins+=(archlinux)
+fi
 
-# User configuration
+# Load Oh My Zsh if installed
+[[ -f "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
 
-# export MANPATH="/usr/local/man:$MANPATH"
+# Language environment
+export LANG="en_US.UTF-8"
 
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
+# Editor configuration
+if [[ -n "$SSH_CONNECTION" ]]; then
+  export EDITOR="vim"
+elif command -v nvim &>/dev/null; then
+  export EDITOR="nvim"
+fi
 
-# Preferred editor for local and remote sessions
-if [[ -n $SSH_CONNECTION ]]; then
-  export EDITOR='vim'
+if command -v code &>/dev/null; then
+  export VISUAL="code --wait"
+fi
+
+# Aliases
+if command -v eza &>/dev/null; then
+  alias ls="eza --icons --group-directories-first"
+  alias ll="eza -al --icons --group-directories-first --git"
 else
-  export EDITOR='nvim'
+  alias ls="ls --color=auto"
+  alias ll="ls -la"
 fi
-
-if [[ -n "$SSH_CLIENT" || -n "$SSH_TTY" ]]; then
-  # Rebuilds the exact half-life prompt, but injects 'on <hostname>' using the theme's turquoise
-  PROMPT=$'%{$purple%}%n%{$reset_color%} on %{$turquoise%}%m%{$reset_color%} in %{$limegreen%}%~%{$reset_color%}$(ruby_prompt_info " with%{$hotpink%} " v g "%{$reset_color%}")$vcs_info_msg_0_%{$orange%} ➭ %{$reset_color%}'
-fi
-
-# Compilation flags
-# export ARCHFLAGS="-arch $(uname -m)"
-
-# Set personal aliases, overriding those provided by Oh My Zsh libs,
-# plugins, and themes. Aliases can be placed here, though Oh My Zsh
-# users are encouraged to define aliases within a top-level file in
-# the $ZSH_CUSTOM folder, with .zsh extension. Examples:
-# - $ZSH_CUSTOM/aliases.zsh
-# - $ZSH_CUSTOM/macos.zsh
-# For a full list of active aliases, run `alias`.
-#
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
-
-export VISUAL="code --wait"
-export EDITOR="code --wait"
-
-alias ls="eza --icons --group-directories-first"
-alias ll="eza -al --icons --group-directories-first --git"
 
 alias k="kubectl"
 alias kx="kubectx"
@@ -139,14 +68,32 @@ alias kn="kubens"
 alias d="docker"
 alias dc="docker-compose"
 
-export DOCKER_HOST="unix://$(podman info --format '{{.Host.RemoteSocket.Path}}' 2>/dev/null)"
+# Homebrew environment (supports Apple Silicon macOS, Intel macOS, and Linuxbrew)
+if [[ -x "/opt/homebrew/bin/brew" ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv zsh)"
+elif [[ -x "/usr/local/bin/brew" ]]; then
+  eval "$(/usr/local/bin/brew shellenv zsh)"
+elif [[ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
+fi
 
-eval "$(fzf --zsh)"
-eval "$(direnv hook zsh)"
-eval "$(starship init zsh)"
+# Tool initializations (graceful execution if installed)
+command -v fnm &>/dev/null && eval "$(fnm env --use-on-cd 2>/dev/null || fnm env)"
+command -v fzf &>/dev/null && eval "$(fzf --zsh)"
+command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
+command -v starship &>/dev/null && eval "$(starship init zsh)"
 
-#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+# User local bin paths (portable across macOS and Linux)
+[[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
+
+# Bun (if installed)
+export BUN_INSTALL="$HOME/.bun"
+[[ -d "$BUN_INSTALL/bin" ]] && export PATH="$BUN_INSTALL/bin:$PATH"
+[[ -s "$HOME/.bun/_bun" ]] && source "$HOME/.bun/_bun"
+
+# SDKMAN (if installed - must stay near end of shell configuration)
 export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 
-eval "$(fnm env)"
+# Local / Machine-specific secrets & overrides (never committed to git)
+[[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"

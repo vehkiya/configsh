@@ -1,0 +1,17 @@
+# Backup files
+*.bak
+*.backup
+*~
+
+# Local / Machine-specific secrets and configs
+*.local
+*.local.zsh
+.zshrc.local
+
+# OS-generated metadata
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db

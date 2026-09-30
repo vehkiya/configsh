@@ -15,6 +15,7 @@ $cpp\
 $rust\
 $golang\
 $nodejs\
+$bun\
 $php\
 $java\
 $kotlin\
@@ -25,6 +26,7 @@ $docker_context\
 $conda\
 $pixi\
 $kubernetes\
+$cmd_duration\
 [](fg:color_bg3 bg:color_bg1)\
 $time\
 [ ](fg:color_bg1)\
@@ -43,7 +45,7 @@ color_orange = '#d65d0e'
 color_purple = '#b16286'
 color_red = '#cc241d'
 color_yellow = '#d79921'
-
+color_blue_light = '#83a598'
 
 [character] # The name of the module we are configuring is 'character'
 disabled = false
@@ -63,6 +65,11 @@ format = '[ $user ]($style)'
 [line_break]
 disabled = false
 
+[cmd_duration]
+min_time = 2_000
+style = "bg:color_bg3"
+format = '[[ 󱦟 $duration ](fg:color_yellow bg:color_bg3)]($style)'
+
 [aws]
 symbol = " "
 
@@ -71,6 +78,8 @@ symbol = " "
 
 [bun]
 symbol = " "
+style = "bg:color_blue"
+format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
 [c]
 symbol = " "
@@ -88,7 +97,7 @@ symbol = " "
 [conda]
 symbol = " "
 style = "bg:color_bg3"
-format = '[[ $symbol( $environment) ](fg:#83a598 bg:color_bg3)]($style)'
+format = '[[ $symbol( $environment) ](fg:color_blue_light bg:color_bg3)]($style)'
 
 [crystal]
 symbol = " "
@@ -106,11 +115,17 @@ format = "[ $path ]($style)"
 truncation_length = 3
 truncation_symbol = "…/"
 
+[directory.substitutions]
+"Documents" = "󰈙 "
+"Downloads" = " "
+"Music" = "󰝚 "
+"Pictures" = " "
+"projects" = "󰲋 "
+
 [docker_context]
 symbol = " "
 style = "bg:color_bg3"
-format = '[[ $symbol( $context) ](fg:#83a598 bg:color_bg3)]($style)'
-
+format = '[[ $symbol( $context) ](fg:color_blue_light bg:color_bg3)]($style)'
 
 [elixir]
 symbol = " "
@@ -182,8 +197,9 @@ format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
 [kubernetes]
 disabled = false
+symbol = "󱃾 "
 style = "bg:color_bg3"
-format = '[[ $symbol( $context) [\[$namespace\]](fg:color_orange bg:color_bg3) ](fg:#83a598 bg:color_bg3)]($style)'
+format = '[[ $symbol( $context) [\[$namespace\]](fg:color_orange bg:color_bg3) ](fg:color_blue_light bg:color_bg3)]($style)'
 
 [lua]
 symbol = " "
@@ -217,32 +233,32 @@ Alpaquita = " "
 Alpine = " "
 AlmaLinux = " "
 Amazon = " "
-Android = " "
+Android = " "
 AOSC = " "
-Arch = " "
-Artix = " "
+Arch = "󰣇 "
+Artix = "󰣇 "
 CachyOS = " "
 CentOS = " "
-Debian = " "
+Debian = "󰣚 "
 DragonFly = " "
 Elementary = " "
 Emscripten = " "
 EndeavourOS = " "
-Fedora = " "
+Fedora = "󰣛 "
 FreeBSD = " "
 Garuda = "󰛓 "
-Gentoo = " "
+Gentoo = "󰣨 "
 HardenedBSD = "󰞌 "
 Illumos = "󰈸 "
 Ios = "󰀷 "
 Kali = " "
-Linux = " "
+Linux = "󰌽 "
 Mabox = " "
-Macos = " "
+Macos = "󰀵 "
 Manjaro = " "
 Mariner = " "
 MidnightBSD = " "
-Mint = " "
+Mint = "󰣭 "
 NetBSD = " "
 NixOS = " "
 Nobara = " "
@@ -250,14 +266,14 @@ OpenBSD = "󰈺 "
 openSUSE = " "
 OracleLinux = "󰌷 "
 Pop = " "
-Raspbian = " "
-Redhat = " "
-RedHatEnterprise = " "
+Raspbian = "󰐿 "
+Redhat = "󱄛 "
+RedHatEnterprise = "󱄛 "
 RockyLinux = " "
 Redox = "󰀘 "
 Solus = "󰠳 "
 SUSE = " "
-Ubuntu = " "
+Ubuntu = "󰕈 "
 Unknown = " "
 Void = " "
 Windows = "󰍲 "
