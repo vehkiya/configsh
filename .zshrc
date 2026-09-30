@@ -11,6 +11,16 @@ zstyle ':omz:update' frequency 3
 # Disable command auto-correction
 ENABLE_CORRECTION="false"
 
+# History security & privacy
+HISTSIZE=10000
+SAVEHIST=10000
+HISTFILE="$HOME/.zsh_history"
+setopt HIST_IGNORE_SPACE         # Prefix command with a space to prevent writing to history
+setopt HIST_IGNORE_DUPS          # Don't record duplicate commands
+setopt HIST_REDUCE_BLANKS        # Remove superfluous blanks
+setopt SHARE_HISTORY             # Share history across sessions
+
+
 # Cross-platform plugins
 plugins=(
   git
