@@ -1,0 +1,49 @@
+# =============================================================================
+# ~/.config/direnv/direnvrc - Global direnv library extensions
+# Cross-platform secret helpers for OpenBao / Vault and pass
+# =============================================================================
+
+# Load a secret from the 'pass' password manager into an environment variable
+# Usage in .envrc: use_pass API_KEY my-service/api-key
+use_pass() {
+  local var_name="$1"
+  local secret_path="$2"
+
+  if command -v pass &>/dev/null; then
+    local secret_val
+    secret_val="$(pass show "$secret_path" 2>/dev/null | head -n 1)"
+    if [ -n "$secret_val" ]; then
+      export "$var_name"="$secret_val"
+    else
+      echo "direnv: warning: secret '$secret_path' not found in pass" >&2
+    fi
+  else
+    echo "direnv: error: 'pass' command not found" >&2
+  fi
+}
+
+# Load a secret from an OpenBao or HashiCorp Vault instance into an environment variable
+# Usage in .envrc: use_vault DATABASE_URL secret/data/my-app db_url
+use_vault() {
+  local var_name="$1"
+  local secret_path="$2"
+  local field="${3:-value}"
+
+  local cmd=""
+  if command -v bao &>/dev/null; then
+    cmd="bao"
+  elif command -v vault &>/dev/null; then
+    cmd="vault"
+  else
+    echo "direnv: error: neither 'bao' nor 'vault' command found" >&2
+    return 1
+  fi
+
+  local secret_val
+  secret_val="$("$cmd" kv get -field="$field" "$secret_path" 2>/dev/null || true)"
+  if [ -n "$secret_val" ]; then
+    export "$var_name"="$secret_val"
+  else
+    echo "direnv: warning: could not read field '$field' from '$secret_path' via $cmd" >&2
+  fi
+}

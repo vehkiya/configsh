@@ -35,6 +35,8 @@ plugins=(
   npm
   nvm
   emoji-clock
+  vault
+  pass
   zsh-autosuggestions
   zsh-syntax-highlighting
 )
@@ -77,6 +79,18 @@ alias kx="kubectx"
 alias kn="kubens"
 alias d="docker"
 alias dc="docker-compose"
+alias v="vault"
+alias b="bao"
+alias p="pass"
+
+# Vault & OpenBao completion / compatibility
+if command -v bao &>/dev/null; then
+  complete -o nospace -C bao bao 2>/dev/null || true
+  command -v vault &>/dev/null || alias vault="bao"
+fi
+if command -v vault &>/dev/null; then
+  complete -o nospace -C vault vault 2>/dev/null || true
+fi
 
 # Homebrew environment (supports Apple Silicon macOS, Intel macOS, and Linuxbrew)
 if [[ -x "/opt/homebrew/bin/brew" ]]; then
@@ -91,6 +105,7 @@ fi
 command -v fnm &>/dev/null && eval "$(fnm env --use-on-cd 2>/dev/null || fnm env)"
 command -v fzf &>/dev/null && eval "$(fzf --zsh)"
 command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
+[[ -f "$HOME/.config/direnv/direnvrc" ]] && source "$HOME/.config/direnv/direnvrc"
 command -v starship &>/dev/null && eval "$(starship init zsh)"
 
 # User local bin paths (portable across macOS and Linux)
