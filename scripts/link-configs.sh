@@ -136,9 +136,20 @@ link_file "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 # Link starship.toml
 link_file "$DOTFILES_DIR/.config/starship.toml" "$HOME/.config/starship.toml"
 
-# Link Ghostty config
-link_file "$DOTFILES_DIR/.config/ghostty/config.ghostty" "$HOME/.config/ghostty/config.ghostty"
-link_file "$DOTFILES_DIR/.config/ghostty/config" "$HOME/.config/ghostty/config"
+# Link Ghostty config (only if Ghostty is installed or previously configured)
+if command -v ghostty &>/dev/null || [ -d "/Applications/Ghostty.app" ] || [ -f "/usr/lib/systemd/user/app-com.mitchellh.ghostty.service" ] || [ -L "$HOME/.config/ghostty/config" ]; then
+    link_file "$DOTFILES_DIR/.config/ghostty/config.ghostty" "$HOME/.config/ghostty/config.ghostty"
+    link_file "$DOTFILES_DIR/.config/ghostty/config" "$HOME/.config/ghostty/config"
+
+    # macOS Ghostty alternative location support
+    if [ "$OS" = "Darwin" ]; then
+        GHOSTTY_MAC_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
+        mkdir -p "$GHOSTTY_MAC_DIR"
+        link_file "$DOTFILES_DIR/.config/ghostty/config" "$GHOSTTY_MAC_DIR/config"
+    fi
+else
+    success "Ghostty not installed; skipping Ghostty configuration symlinks."
+fi
 
 # Link direnvrc (secret helpers for OpenBao/Vault & pass)
 link_file "$DOTFILES_DIR/.config/direnv/direnvrc" "$HOME/.config/direnv/direnvrc"
@@ -146,13 +157,6 @@ link_file "$DOTFILES_DIR/.config/direnv/direnvrc" "$HOME/.config/direnv/direnvrc
 # Link pinentry-wrapper (adaptive GUI/CLI with OS keychain support)
 chmod +x "$DOTFILES_DIR/scripts/pinentry-wrapper.sh"
 link_file "$DOTFILES_DIR/scripts/pinentry-wrapper.sh" "$HOME/.local/bin/pinentry-wrapper"
-
-# macOS Ghostty alternative location support
-if [ "$OS" = "Darwin" ]; then
-    GHOSTTY_MAC_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
-    mkdir -p "$GHOSTTY_MAC_DIR"
-    link_file "$DOTFILES_DIR/.config/ghostty/config" "$GHOSTTY_MAC_DIR/config"
-fi
 
 # Ensure ~/.zshrc.local template exists with private permissions
 if [ ! -f "$HOME/.zshrc.local" ]; then

@@ -116,6 +116,9 @@ check_optional_tool() {
         bin_path="$(command -v "$cmd")"
         add_result "$category" "opt_ok" "$name" "$bin_path"
         return 0
+    elif [ "$cmd" = "ghostty" ] && [ -d "/Applications/Ghostty.app" ]; then
+        add_result "$category" "opt_ok" "$name" "/Applications/Ghostty.app"
+        return 0
     else
         add_result "$category" "opt_missing" "$name" "Not installed (optional)"
         [[ -n "$brew_pkg" ]] && OPT_MISSING_BREW+=("$brew_pkg")
@@ -132,7 +135,6 @@ check_optional_tool() {
 check_tool "Core Shell & Terminal" "git" "Git (version control)" "git" "git" "git"
 check_tool "Core Shell & Terminal" "zsh" "Zsh (shell)" "zsh" "zsh" "zsh"
 check_tool "Core Shell & Terminal" "curl" "Curl (transfer utility)" "curl" "curl" "curl"
-check_tool "Core Shell & Terminal" "ghostty" "Ghostty (terminal emulator)" "ghostty" "ghostty" ""
 
 # Oh My Zsh Framework & Custom Plugins
 if [ -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
@@ -277,9 +279,10 @@ check_optional_tool "Linters & Manifest Tools (Optional)" "yq" "Yq (YAML process
 check_optional_tool "Linters & Manifest Tools (Optional)" "jq" "Jq (JSON processor)" "jq" "jq" "jq"
 
 # -----------------------------------------------------------------------------
-# 8. Terminal File Managers (Optional)
+# 8. Terminal Emulators & File Managers (Optional)
 # -----------------------------------------------------------------------------
-check_optional_tool "Terminal File Managers (Optional)" "yazi" "Yazi (terminal file manager)" "yazi" "yazi" "yazi"
+check_optional_tool "Terminal Emulators & File Managers (Optional)" "ghostty" "Ghostty (terminal emulator)" "ghostty" "ghostty" ""
+check_optional_tool "Terminal Emulators & File Managers (Optional)" "yazi" "Yazi (terminal file manager)" "yazi" "yazi" "yazi"
 
 # -----------------------------------------------------------------------------
 # Print Formatted Prerequisites Summary

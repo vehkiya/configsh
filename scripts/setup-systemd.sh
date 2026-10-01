@@ -26,7 +26,7 @@ EOF
             success "Reloaded systemd user daemon"
         fi
     else
-        success "Ghostty systemd service not present; skipping override."
+        success "Ghostty not installed or systemd service not present; skipping override."
     fi
     echo ""
 fi

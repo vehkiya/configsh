@@ -117,15 +117,21 @@ check_symlink() {
 
 check_symlink "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 check_symlink "$DOTFILES_DIR/.config/starship.toml" "$HOME/.config/starship.toml"
-check_symlink "$DOTFILES_DIR/.config/ghostty/config.ghostty" "$HOME/.config/ghostty/config.ghostty"
-check_symlink "$DOTFILES_DIR/.config/ghostty/config" "$HOME/.config/ghostty/config"
+# Ghostty config check (optional)
+if command -v ghostty &>/dev/null || [ -d "/Applications/Ghostty.app" ] || [ -f "/usr/lib/systemd/user/app-com.mitchellh.ghostty.service" ] || [ -L "$HOME/.config/ghostty/config" ]; then
+    check_symlink "$DOTFILES_DIR/.config/ghostty/config.ghostty" "$HOME/.config/ghostty/config.ghostty"
+    check_symlink "$DOTFILES_DIR/.config/ghostty/config" "$HOME/.config/ghostty/config"
+
+    if [ "$OS" = "Darwin" ]; then
+        GHOSTTY_MAC_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
+        check_symlink "$DOTFILES_DIR/.config/ghostty/config" "$GHOSTTY_MAC_DIR/config"
+    fi
+else
+    doctor_info "Ghostty: Not installed (optional; config symlink skipped)"
+fi
+
 check_symlink "$DOTFILES_DIR/.config/direnv/direnvrc" "$HOME/.config/direnv/direnvrc"
 check_symlink "$DOTFILES_DIR/scripts/pinentry-wrapper.sh" "$HOME/.local/bin/pinentry-wrapper"
-
-if [ "$OS" = "Darwin" ]; then
-    GHOSTTY_MAC_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
-    check_symlink "$DOTFILES_DIR/.config/ghostty/config" "$GHOSTTY_MAC_DIR/config"
-fi
 
 # -----------------------------------------------------------------------------
 # 3. Shell Framework & Plugins Check
@@ -297,14 +303,16 @@ if [ -f "$HOME/.ssh/config" ]; then
     fi
 fi
 
-# Linux Ghostty override check
+# Linux Ghostty override check (if Ghostty is installed)
 if [ "$OS" = "Linux" ]; then
-    GHOSTTY_OVERRIDE="$HOME/.config/systemd/user/app-com.mitchellh.ghostty.service.d/override.conf"
-    if [ -f "$GHOSTTY_OVERRIDE" ]; then
-        if grep -q "Type=notify" "$GHOSTTY_OVERRIDE" 2>/dev/null; then
-            pass "Ghostty systemd override: Type=notify active"
-        else
-            fail "Ghostty systemd override: Type=notify missing in $GHOSTTY_OVERRIDE"
+    if command -v ghostty &>/dev/null || [ -f "/usr/lib/systemd/user/app-com.mitchellh.ghostty.service" ]; then
+        GHOSTTY_OVERRIDE="$HOME/.config/systemd/user/app-com.mitchellh.ghostty.service.d/override.conf"
+        if [ -f "$GHOSTTY_OVERRIDE" ]; then
+            if grep -q "Type=notify" "$GHOSTTY_OVERRIDE" 2>/dev/null; then
+                pass "Ghostty systemd override: Type=notify active"
+            else
+                fail "Ghostty systemd override: Type=notify missing in $GHOSTTY_OVERRIDE"
+            fi
         fi
     fi
 fi

@@ -28,7 +28,7 @@ source ~/.zshrc
 
 ## 📦 What's Included
 
-* **[Ghostty](.config/ghostty/config.ghostty)**:
+* **[Ghostty](.config/ghostty/config.ghostty)** *(Optional - applied automatically only if installed)*:
   * Warm Gruvbox Dark aesthetic matching Starship.
   * Balanced window padding (12px) for Powerline capsules.
   * Native shell integration with OSC 133 prompt markers.
