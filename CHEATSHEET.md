@@ -23,6 +23,7 @@ Replace your old command-line habits with these faster, modern alternatives:
 | Switching K8s context / namespace | **`kx`** / **`kn`** | Interactive context and namespace switchers. |
 | `docker` / `docker-compose` | **`d`** / **`dc`** | Muscle-memory short aliases. |
 | `pass show ...` | **`p`** | Fast secret lookup (`p github/token`). |
+| Remembering SSH hostnames / IPs | **`fssh`** *(or `fssh "host"`)* | Interactive fuzzy picker for all hosts in `~/.ssh/config`. Shows live preview of user, port, and identity file; <kbd>Enter</kbd> connects immediately. |
 | Typing commands with API keys/tokens | `<space>command` | Prefix with a **single space**; it will never be written to your shell history. |
 
 ---
@@ -45,6 +46,7 @@ Replace your old command-line habits with these faster, modern alternatives:
 | **`z <query>`** | `zoxide` | Smart jump: Navigates to directory matching query (e.g. `z doc` $\rightarrow$ `~/documents`). |
 | **`zi`** | `zoxide` + `fzf` | Interactive directory jumper using an `fzf` fuzzy menu. |
 | **`y [path]`** | `yazi` | Terminal file manager with automatic working directory synchronization on exit. |
+| **`fssh [query]`** | `fzf` + `ssh` | **Interactive SSH host picker**: fuzzy-search configured hosts from `~/.ssh/config` with live config preview (`User`, `HostName`, `Port`, `IdentityFile`). Pressing <kbd>Enter</kbd> connects immediately. |
 | <kbd>Tab</kbd> | `fzf-tab` | Interactive completion menu: fuzzy-matches completion candidates with live directory (`eza`) and file (`bat`) previews. |
 | <kbd>Ctrl</kbd> + <kbd>R</kbd> | `fzf` | Interactive command history search with fuzzy filtering. |
 | <kbd>Ctrl</kbd> + <kbd>T</kbd> | `fzf` | Interactive file finder; pastes selected file path into the current command line. |
