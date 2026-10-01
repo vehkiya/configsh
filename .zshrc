@@ -232,7 +232,5 @@ fi
 
 # sshx: TUI SSH Connection Manager & Host Adder (native compiled utility: ~/.local/bin/sshx)
 alias fssh="sshx"
-alias fssh-add="sshx add"
-alias ssh-add-host="sshx add"
 
 

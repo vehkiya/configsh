@@ -19,6 +19,5 @@ Thumbs.db
 # Go binaries and build artifacts
 bin/
 *.exe
-/ssh-add-host
 
 

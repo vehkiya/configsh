@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# scripts/build-tools.sh - Install/Compile Native Utilities to ~/.local/bin
+# scripts/build-tools.sh - Install Native Utilities to ~/.local/bin
 # Supports: macOS (Darwin ARM/Intel) & Linux
 # =============================================================================
 
@@ -17,25 +17,28 @@ header "Native Utility Binaries"
 BIN_DIR="$HOME/.local/bin"
 mkdir -p "$BIN_DIR"
 
+# Clean up obsolete aliases/symlinks if present
+rm -f "$BIN_DIR/ssh-add-host" "$BIN_DIR/add-ssh-host" "$BIN_DIR/fssh-add" 2>/dev/null || true
+
 # -----------------------------------------------------------------------------
-# 1. Install or compile sshx (https://github.com/vehkiya/sshx)
+# 1. Install sshx (https://github.com/vehkiya/sshx)
+# Prefers go install, falls back to precompiled GitHub Release binary
 # -----------------------------------------------------------------------------
-if [ -d "$HOME/projects/sshx" ]; then
-    info "Compiling sshx from local repository ($HOME/projects/sshx)..."
-    (
-        cd "$HOME/projects/sshx"
-        COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "local")
-        CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.Commit=${COMMIT}" -o "$BIN_DIR/sshx" .
-    )
-    chmod 755 "$BIN_DIR/sshx"
-    success "Installed sshx (from local repo)"
-elif command -v go &>/dev/null; then
+installed=false
+
+if command -v go &>/dev/null; then
     info "Installing sshx via go install github.com/vehkiya/sshx@latest..."
-    GOBIN="$BIN_DIR" CGO_ENABLED=0 go install -trimpath -ldflags="-s -w" github.com/vehkiya/sshx@latest
-    chmod 755 "$BIN_DIR/sshx"
-    success "Installed sshx (via go install)"
-else
-    warn "Go compiler not found. Attempting to download prebuilt sshx binary..."
+    if GOBIN="$BIN_DIR" CGO_ENABLED=0 go install -trimpath -ldflags="-s -w" github.com/vehkiya/sshx@latest 2>/dev/null; then
+        chmod 755 "$BIN_DIR/sshx"
+        success "Installed sshx (via go install)"
+        installed=true
+    else
+        warn "go install failed, falling back to precompiled GitHub release..."
+    fi
+fi
+
+if [ "$installed" = false ]; then
+    info "Downloading prebuilt sshx binary from GitHub Releases..."
     OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
     ARCH="$(uname -m)"
     case "$ARCH" in
@@ -49,19 +52,14 @@ else
         chmod 755 "$BIN_DIR/sshx"
         rm -f /tmp/sshx.tar.gz
         success "Installed sshx (from GitHub Releases)"
+        installed=true
     else
         warn "Could not download prebuilt sshx release. Install Go or download manually from https://github.com/vehkiya/sshx/releases"
     fi
 fi
 
-# Symlink backwards-compatible aliases
-if [ -x "$BIN_DIR/sshx" ]; then
-    ln -sf "$BIN_DIR/sshx" "$BIN_DIR/ssh-add-host"
-    success "Linked ssh-add-host -> sshx"
-fi
-
 # -----------------------------------------------------------------------------
-# 2. Build any custom dotfiles utilities in cmd/
+# 2. Build any custom dotfiles utilities in cmd/ (if present)
 # -----------------------------------------------------------------------------
 if [ -d "$DOTFILES_DIR/cmd" ]; then
     for tool_dir in "$DOTFILES_DIR"/cmd/*; do

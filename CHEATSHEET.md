@@ -24,7 +24,7 @@ Replace your old command-line habits with these faster, modern alternatives:
 | `docker` / `docker-compose` | **`d`** / **`dc`** | Muscle-memory short aliases. |
 | `pass show ...` | **`p`** | Fast secret lookup (`p github/token`). |
 | Remembering SSH hostnames / IPs | **`sshx`** *(or `fssh`)* | Interactive TUI SSH connection manager. Browse, fuzzy-search, add (<kbd>a</kbd>), delete (<kbd>d</kbd>), or connect (<kbd>Enter</kbd>). |
-| Always typing `ssh user@host...` | **`sshx add`** *(or `fssh-add`)* | Interactive Huh wizard to configure and save SSH hosts to `~/.ssh/config`. Supports key/password auth, key generation, and `ssh-copy-id`. |
+| Always typing `ssh user@host...` | **`sshx add`** | Interactive Huh wizard to configure and save SSH hosts to `~/.ssh/config`. Supports key/password auth, key generation, and `ssh-copy-id`. |
 | Forgetting shell shortcuts/aliases | **`cs`** *(or `cheatsheet`)* | Opens this entire cheatsheet in an interactive terminal pager using `glow`. |
 | Typing commands with API keys/tokens | `<space>command` | Prefix with a **single space**; it will never be written to your shell history. |
 
@@ -51,7 +51,7 @@ Replace your old command-line habits with these faster, modern alternatives:
 | **`zi`** | `zoxide` + `fzf` | Interactive directory jumper using an `fzf` fuzzy menu. |
 | **`y [path]`** | `yazi` | Terminal file manager with automatic working directory synchronization on exit. |
 | **`sshx [alias]`** | `sshx` | **TUI SSH Connection Manager** (`fssh`): Interactive Bubble Tea browser for all SSH hosts. Connect (<kbd>Enter</kbd>), search (<kbd>/</kbd>), add (<kbd>a</kbd>), delete (<kbd>d</kbd>), copy key (<kbd>c</kbd>), or edit (<kbd>e</kbd>). |
-| **`sshx add [target] [alias]`** | `sshx` | **Interactive SSH Host Adder** (`fssh-add` / `ssh-add-host`): Huh wizard to configure hosts, keys, and password auth before `Host *`. |
+| **`sshx add [target] [alias]`** | `sshx` | **Interactive SSH Host Adder**: Huh wizard to configure hosts, keys, and password auth before `Host *`. |
 | <kbd>Tab</kbd> | `fzf-tab` | Interactive completion menu: fuzzy-matches completion candidates with live directory (`eza`) and file (`bat`) previews. |
 | <kbd>Ctrl</kbd> + <kbd>R</kbd> | `fzf` | Interactive command history search with fuzzy filtering. |
 | <kbd>Ctrl</kbd> + <kbd>T</kbd> | `fzf` | Interactive file finder; pastes selected file path into the current command line. |
