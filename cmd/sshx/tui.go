@@ -363,8 +363,8 @@ func DeleteHostPrompt(alias, homeDir string) error {
 				Title(fmt.Sprintf("Delete host block for '%s' from ~/.ssh/config?", alias)).
 				Description("This action permanently removes the Host configuration entry").
 				Value(&confirm),
-		),
-	).WithTheme(huh.ThemeCharm())
+		).Title("Confirm Host Deletion"),
+	).WithTheme(customHuhTheme())
 
 	if err := form.Run(); err != nil || !confirm {
 		return nil
@@ -381,6 +381,12 @@ func DeleteHostPrompt(alias, homeDir string) error {
 		return err
 	}
 
-	fmt.Printf("\n✔ Removed '%s' from %s\n\n", alias, configPath)
+	delBadge := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("#FFFFFF")).
+		Background(lipgloss.Color("#FF5F87")).
+		Padding(0, 1).
+		Render(" DELETED ")
+	fmt.Printf("\n%s Removed '%s' from %s\n\n", delBadge, alias, configPath)
 	return nil
 }
