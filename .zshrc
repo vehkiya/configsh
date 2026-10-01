@@ -41,6 +41,7 @@ plugins=(
   emoji-clock
   vault
   pass
+  fzf-tab
   zsh-autosuggestions
   zsh-syntax-highlighting
 )
@@ -172,5 +173,52 @@ if command -v yazi &>/dev/null; then
       builtin cd -- "$cwd"
     fi
     rm -f -- "$tmp"
+  }
+fi
+
+# Bat / Batcat compatibility (Debian/Ubuntu)
+if ! command -v bat &>/dev/null && command -v batcat &>/dev/null; then
+  alias bat="batcat"
+fi
+
+# Fzf-Tab completion styling & rich previews (eza for dirs, bat for files)
+if [[ " ${plugins[*]} " =~ " fzf-tab " ]]; then
+  # Disable sort when completing git checkout
+  zstyle ':completion:*:git-checkout:*' sort false
+  # Force zsh not to show completion menu, allowing fzf-tab to capture it
+  zstyle ':completion:*' menu no
+  # Enable colorized completion lists
+  zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+  # Custom descriptions format
+  zstyle ':completion:*:descriptions' format '[%d]'
+
+  # Preview directory contents with eza when completing cd / z
+  if command -v eza &>/dev/null; then
+    zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -1 --color=always $realpath'
+    zstyle ':fzf-tab:complete:z:*' fzf-preview 'eza -1 --color=always $realpath'
+  fi
+
+  # Preview file contents with bat when completing file arguments
+  if command -v bat &>/dev/null; then
+    zstyle ':fzf-tab:complete:*:*' fzf-preview 'bat --style=numbers --color=always --line-range :500 $realpath 2>/dev/null || cat $realpath 2>/dev/null'
+  elif command -v batcat &>/dev/null; then
+    zstyle ':fzf-tab:complete:*:*' fzf-preview 'batcat --style=numbers --color=always --line-range :500 $realpath 2>/dev/null || cat $realpath 2>/dev/null'
+  fi
+fi
+
+# fif: Interactive Find In Files (live ripgrep + fzf + bat preview)
+if command -v rg &>/dev/null && command -v fzf &>/dev/null; then
+  fif() {
+    local bat_cmd="cat"
+    command -v bat &>/dev/null && bat_cmd="bat --style=numbers --color=always --line-range :500"
+    command -v batcat &>/dev/null && bat_cmd="batcat --style=numbers --color=always --line-range :500"
+
+    rg --column --line-number --no-heading --color=always --smart-case "${*:-}" 2>/dev/null |
+      fzf --ansi \
+          --color "hl:-1:underline,hl+:-1:underline:reverse" \
+          --delimiter : \
+          --preview "$bat_cmd {1} --highlight-line {2}" \
+          --preview-window "up,60%,border-bottom,+{2}+3/3,~3" \
+          --bind "enter:become(${EDITOR:-vim} +{2} {1})"
   }
 fi

@@ -158,6 +158,28 @@ link_file "$DOTFILES_DIR/.config/direnv/direnvrc" "$HOME/.config/direnv/direnvrc
 chmod +x "$DOTFILES_DIR/scripts/pinentry-wrapper.sh"
 link_file "$DOTFILES_DIR/scripts/pinentry-wrapper.sh" "$HOME/.local/bin/pinentry-wrapper"
 
+# Ensure custom Oh My Zsh plugins are present if Oh My Zsh is installed
+if [ -d "$HOME/.oh-my-zsh" ]; then
+    CUSTOM_PLUGINS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
+    mkdir -p "$CUSTOM_PLUGINS_DIR"
+    if [ ! -d "$CUSTOM_PLUGINS_DIR/fzf-tab" ]; then
+        info "Installing fzf-tab plugin for Oh My Zsh..."
+        if git clone --quiet https://github.com/Aloxaf/fzf-tab "$CUSTOM_PLUGINS_DIR/fzf-tab" 2>/dev/null; then
+            success "Installed fzf-tab plugin"
+        else
+            warn "Failed to clone fzf-tab plugin (check internet connection)"
+        fi
+    fi
+    if [ ! -d "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" ] && ! [ -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] && ! [ -f "/home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+        info "Installing zsh-autosuggestions plugin for Oh My Zsh..."
+        git clone --quiet https://github.com/zsh-users/zsh-autosuggestions "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" 2>/dev/null && success "Installed zsh-autosuggestions plugin" || true
+    fi
+    if [ ! -d "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" ] && ! [ -f "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] && ! [ -f "/home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+        info "Installing zsh-syntax-highlighting plugin for Oh My Zsh..."
+        git clone --quiet https://github.com/zsh-users/zsh-syntax-highlighting.git "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" 2>/dev/null && success "Installed zsh-syntax-highlighting plugin" || true
+    fi
+fi
+
 # Ensure ~/.zshrc.local template exists with private permissions
 if [ ! -f "$HOME/.zshrc.local" ]; then
     cat <<'EOF' > "$HOME/.zshrc.local"

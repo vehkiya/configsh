@@ -119,6 +119,9 @@ check_optional_tool() {
     elif [ "$cmd" = "ghostty" ] && [ -d "/Applications/Ghostty.app" ]; then
         add_result "$category" "opt_ok" "$name" "/Applications/Ghostty.app"
         return 0
+    elif [ "$cmd" = "bat" ] && command -v batcat &>/dev/null; then
+        add_result "$category" "opt_ok" "$name" "$(command -v batcat)"
+        return 0
     else
         add_result "$category" "opt_missing" "$name" "Not installed (optional)"
         [[ -n "$brew_pkg" ]] && OPT_MISSING_BREW+=("$brew_pkg")
@@ -145,6 +148,16 @@ else
 fi
 
 CUSTOM_PLUGINS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
+if [ -d "$CUSTOM_PLUGINS_DIR/fzf-tab" ] || [ -f "/usr/share/zsh/plugins/fzf-tab/fzf-tab.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/fzf-tab/fzf-tab.zsh" ] || [ -f "/opt/homebrew/share/fzf-tab/fzf-tab.zsh" ]; then
+    add_result "Core Shell & Terminal" "ok" "Plugin: fzf-tab" "Installed"
+else
+    add_result "Core Shell & Terminal" "missing" "Plugin: fzf-tab" "Not installed"
+    MISSING_BREW+=("fzf-tab")
+    MISSING_PACMAN+=("zsh-fzf-tab-git")
+    MISSING_APT+=("")
+    MISSING_NAMES+=("fzf-tab plugin")
+fi
+
 if [ -d "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" ] || [ -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || [ -f "/opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
     add_result "Core Shell & Terminal" "ok" "Plugin: zsh-autosuggestions" "Installed"
 else
@@ -279,7 +292,13 @@ check_optional_tool "Linters & Manifest Tools (Optional)" "yq" "Yq (YAML process
 check_optional_tool "Linters & Manifest Tools (Optional)" "jq" "Jq (JSON processor)" "jq" "jq" "jq"
 
 # -----------------------------------------------------------------------------
-# 8. Terminal Emulators & File Managers (Optional)
+# 8. Text Search & Inspection (Optional)
+# -----------------------------------------------------------------------------
+check_optional_tool "Text Search & Inspection (Optional)" "rg" "Ripgrep (fast text search)" "ripgrep" "ripgrep" "ripgrep"
+check_optional_tool "Text Search & Inspection (Optional)" "bat" "Bat (syntax-highlighted viewer)" "bat" "bat" "bat"
+
+# -----------------------------------------------------------------------------
+# 9. Terminal Emulators & File Managers (Optional)
 # -----------------------------------------------------------------------------
 check_optional_tool "Terminal Emulators & File Managers (Optional)" "ghostty" "Ghostty (terminal emulator)" "ghostty" "ghostty" ""
 check_optional_tool "Terminal Emulators & File Managers (Optional)" "yazi" "Yazi (terminal file manager)" "yazi" "yazi" "yazi"
@@ -361,6 +380,9 @@ if [ "$CORE_MISSING" -gt 0 ]; then
     # Additional installation pointers
     if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
         echo -e "  ${BLUE}↳ Oh My Zsh: ${BOLD}sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\" \"\" --unattended --keep-zshrc${RESET}"
+    fi
+    if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fzf-tab" ]; then
+        echo -e "  ${BLUE}↳ fzf-tab: ${BOLD}git clone https://github.com/Aloxaf/fzf-tab \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/fzf-tab${RESET}"
     fi
     if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" ] && ! command -v pacman &>/dev/null && ! command -v brew &>/dev/null; then
         echo -e "  ${BLUE}↳ zsh-autosuggestions: ${BOLD}git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions${RESET}"

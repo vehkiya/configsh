@@ -146,6 +146,13 @@ else
 fi
 
 CUSTOM_PLUGINS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
+if [ -d "$CUSTOM_PLUGINS_DIR/fzf-tab" ] || [ -f "/usr/share/zsh/plugins/fzf-tab/fzf-tab.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/fzf-tab/fzf-tab.zsh" ] || [ -f "/opt/homebrew/share/fzf-tab/fzf-tab.zsh" ]; then
+    pass "Plugin: fzf-tab installed"
+else
+    fail "Plugin: fzf-tab missing"
+    echo -e "        ${YELLOW}↳ Remediation: git clone https://github.com/Aloxaf/fzf-tab \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/fzf-tab${RESET}"
+fi
+
 if [ -d "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" ] || [ -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || [ -f "/opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
     pass "Plugin: zsh-autosuggestions installed"
 else

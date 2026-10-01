@@ -42,7 +42,9 @@ source ~/.zshrc
 * **[Zsh](.zshrc)**:
   * Multi-architecture Homebrew support (Apple Silicon `/opt/homebrew`, Intel Mac `/usr/local`, Linux `/home/linuxbrew`).
   * OS-conditional Oh My Zsh plugins (`macos` on Darwin, `archlinux` on Arch).
-  * Defensive tool initializations (`eza`, `fnm`, `fzf`, `direnv`, `starship`).
+  * Defensive tool initializations (`eza`, `fnm`, `fzf`, `direnv`, `starship`, `zoxide`, `yazi`).
+  * Modern tab completion via **`fzf-tab`** with live previews (`eza` for directories, `bat` for files).
+  * Interactive text search via **`fif`** (`ripgrep` + `fzf` + `bat` preview with direct editor jumping).
   * History privacy (`HIST_IGNORE_SPACE` — commands starting with a space are never written to disk).
   * Secrets and tool completions (`vault`, `pass`, aliases `v`, `b`, `p`).
   * Local machine configuration integration (`~/.zshrc.local`).
