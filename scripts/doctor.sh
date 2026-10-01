@@ -346,6 +346,15 @@ fi
 # -----------------------------------------------------------------------------
 header "[ 8. Native Compiled Utilities ]"
 
+for utility in sshx; do
+    bin_path="$HOME/.local/bin/$utility"
+    if [ -x "$bin_path" ]; then
+        pass "Compiled utility: $bin_path"
+    else
+        fail "Missing compiled utility: $bin_path (run ./setup.sh to install)"
+    fi
+done
+
 if [ -d "$DOTFILES_DIR/cmd" ]; then
     for tool_dir in "$DOTFILES_DIR"/cmd/*; do
         if [ -d "$tool_dir" ]; then
