@@ -24,6 +24,9 @@ Restart your terminal or run:
 source ~/.zshrc
 ```
 
+> [!TIP]
+> Check out the **[Command & Workflow Cheat Sheet](CHEATSHEET.md)** for all daily aliases, interactive search helpers (`fif`), directory jumping (`z`, `y`), and shortcuts!
+
 ---
 
 ## 📦 What's Included
