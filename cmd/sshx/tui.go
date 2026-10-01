@@ -14,20 +14,67 @@ import (
 )
 
 var (
+	// Brand and header styles
 	titleStyle = lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color("205")).
-			Background(lipgloss.Color("235")).
+			Foreground(lipgloss.Color("#FFFFFF")).
+			Background(lipgloss.Color("#7D56F4")). // Charm Purple
 			Padding(0, 1)
+
+	// Panes
+	rightPaneStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("#7D56F4")).
+			Padding(1, 2)
 
 	detailBoxStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("63")).
+			BorderForeground(lipgloss.Color("#7D56F4")).
 			Padding(0, 1).
 			MarginTop(1)
 
-	keyLabelStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("99"))
-	keyValStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("252"))
+	// Inspector elements
+	inspectorTitle = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#FF5F87")). // Coral Pink
+			MarginBottom(1)
+
+	cardLabel = lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#00D7D7")). // Vibrant Cyan
+			Width(13)
+
+	cardValue = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#EEEEEE"))
+
+	cmdPreviewStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#5FD787")). // Soft Green
+			Background(lipgloss.Color("#262626")).
+			Padding(0, 1).
+			MarginTop(1).
+			MarginBottom(1)
+
+	// Badges
+	keyBadge = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#000000")).
+			Background(lipgloss.Color("#5FD787")).
+			Bold(true).
+			Padding(0, 1)
+
+	passwordBadge = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#000000")).
+			Background(lipgloss.Color("#FFAF00")).
+			Bold(true).
+			Padding(0, 1)
+
+	defaultBadge = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FFFFFF")).
+			Background(lipgloss.Color("#5F87AF")).
+			Bold(true).
+			Padding(0, 1)
+
+	dimStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#767676"))
 )
 
 type customDelegate struct {
@@ -37,12 +84,12 @@ type customDelegate struct {
 func newCustomDelegate() customDelegate {
 	d := list.NewDefaultDelegate()
 	d.Styles.SelectedTitle = d.Styles.SelectedTitle.
-		Foreground(lipgloss.Color("205")).
-		BorderLeftForeground(lipgloss.Color("205")).
+		Foreground(lipgloss.Color("#FF5F87")).
+		BorderLeftForeground(lipgloss.Color("#7D56F4")).
 		Bold(true)
 	d.Styles.SelectedDesc = d.Styles.SelectedDesc.
-		Foreground(lipgloss.Color("246")).
-		BorderLeftForeground(lipgloss.Color("205"))
+		Foreground(lipgloss.Color("#FFFFFF")).
+		BorderLeftForeground(lipgloss.Color("#7D56F4"))
 	return customDelegate{DefaultDelegate: d}
 }
 
@@ -84,6 +131,8 @@ type model struct {
 	keys     *listKeyMap
 	choice   string
 	action   string
+	width    int
+	height   int
 	quitting bool
 }
 
@@ -94,8 +143,15 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		h, v := msg.Width, msg.Height
-		m.list.SetSize(h, v-6)
+		m.width = msg.Width
+		m.height = msg.Height
+
+		if m.width >= 100 {
+			listWidth := m.width * 52 / 100
+			m.list.SetSize(listWidth, m.height-3)
+		} else {
+			m.list.SetSize(m.width, m.height/2)
+		}
 		return m, nil
 
 	case tea.KeyMsg:
@@ -150,41 +206,106 @@ func (m model) View() string {
 		return ""
 	}
 
-	var sb strings.Builder
-	sb.WriteString(m.list.View())
-
-	if selected, ok := m.list.SelectedItem().(HostItem); ok {
-		var details []string
-		targetStr := selected.HostName
-		if selected.User != "" {
-			targetStr = selected.User + "@" + targetStr
-		}
-		if selected.Port > 0 && selected.Port != 22 {
-			targetStr += fmt.Sprintf(":%d", selected.Port)
-		}
-
-		details = append(details, fmt.Sprintf("%s %s", keyLabelStyle.Render("Target:"), keyValStyle.Render(targetStr)))
-
-		authStr := "Default (Agent/Keys + Password)"
-		if !selected.PubkeyAuth || selected.PasswordAuth {
-			authStr = "Password Only (Pubkey Disabled)"
-		} else if selected.IdentityFile != "" {
-			authStr = fmt.Sprintf("Key: %s", selected.IdentityFile)
-		}
-		details = append(details, fmt.Sprintf("%s %s", keyLabelStyle.Render("Auth:"), keyValStyle.Render(authStr)))
-
-		if selected.ProxyJump != "" {
-			details = append(details, fmt.Sprintf("%s %s", keyLabelStyle.Render("ProxyJump:"), keyValStyle.Render(selected.ProxyJump)))
-		}
-
-		if len(selected.AllAliases) > 1 {
-			details = append(details, fmt.Sprintf("%s %s", keyLabelStyle.Render("Aliases:"), keyValStyle.Render(strings.Join(selected.AllAliases, ", "))))
-		}
-
-		details = append(details, fmt.Sprintf("%s %s", keyLabelStyle.Render("Config:"), keyValStyle.Render(selected.ConfigFile)))
-
-		sb.WriteString("\n" + detailBoxStyle.Render(strings.Join(details, "\n")))
+	selected, hasSelection := m.list.SelectedItem().(HostItem)
+	if !hasSelection {
+		return m.list.View()
 	}
+
+	inspectorContent := renderInspector(selected)
+
+	// Responsive layout: Side-by-side when terminal width >= 100 columns
+	if m.width >= 100 {
+		listWidth := m.width * 52 / 100
+		rightWidth := m.width - listWidth - 6
+		if rightWidth < 35 {
+			rightWidth = 35
+		}
+
+		leftView := m.list.View()
+		rightView := rightPaneStyle.
+			Width(rightWidth).
+			Height(m.height - 4).
+			Render(inspectorContent)
+
+		return lipgloss.JoinHorizontal(lipgloss.Top, leftView, rightView)
+	}
+
+	// Stacked layout for smaller terminals
+	stackedBox := detailBoxStyle.Width(m.width - 4).Render(inspectorContent)
+	return lipgloss.JoinVertical(lipgloss.Left, m.list.View(), stackedBox)
+}
+
+func renderInspector(h HostItem) string {
+	var sb strings.Builder
+
+	// Title
+	sb.WriteString(inspectorTitle.Render(fmt.Sprintf("📡 Host: %s", h.Alias)))
+	sb.WriteString("\n")
+
+	// Command preview
+	cmdStr := fmt.Sprintf("ssh %s", h.Alias)
+	sb.WriteString(cmdPreviewStyle.Render(cmdStr))
+	sb.WriteString("\n\n")
+
+	// Target line
+	targetStr := h.HostName
+	if h.User != "" {
+		targetStr = h.User + "@" + targetStr
+	}
+	if h.Port > 0 && h.Port != 22 {
+		targetStr += fmt.Sprintf(":%d", h.Port)
+	}
+	sb.WriteString(fmt.Sprintf("%s %s\n", cardLabel.Render("Target:"), cardValue.Render(targetStr)))
+
+	// HostName & User
+	sb.WriteString(fmt.Sprintf("%s %s\n", cardLabel.Render("HostName:"), cardValue.Render(h.HostName)))
+	if h.User != "" {
+		sb.WriteString(fmt.Sprintf("%s %s\n", cardLabel.Render("User:"), cardValue.Render(h.User)))
+	}
+	sb.WriteString(fmt.Sprintf("%s %s\n", cardLabel.Render("Port:"), cardValue.Render(fmt.Sprintf("%d", h.Port))))
+
+	// Auth Badge & Details
+	var badge string
+	var authDetail string
+	if !h.PubkeyAuth || h.PasswordAuth {
+		badge = passwordBadge.Render("PASSWORD")
+		authDetail = "Pubkey disabled (prevents agent lockouts)"
+	} else if h.IdentityFile != "" {
+		badge = keyBadge.Render("KEY")
+		authDetail = h.IdentityFile
+	} else {
+		badge = defaultBadge.Render("DEFAULT")
+		authDetail = "Agent keys with password fallback"
+	}
+	sb.WriteString(fmt.Sprintf("%s %s %s\n", cardLabel.Render("Auth:"), badge, dimStyle.Render(authDetail)))
+
+	if h.IdentitiesOnly {
+		sb.WriteString(fmt.Sprintf("%s %s\n", cardLabel.Render("Identities:"), cardValue.Render("IdentitiesOnly yes")))
+	}
+
+	if h.ProxyJump != "" {
+		sb.WriteString(fmt.Sprintf("%s %s\n", cardLabel.Render("ProxyJump:"), cardValue.Render(h.ProxyJump)))
+	}
+
+	if len(h.AllAliases) > 1 {
+		sb.WriteString(fmt.Sprintf("%s %s\n", cardLabel.Render("Aliases:"), cardValue.Render(strings.Join(h.AllAliases, ", "))))
+	}
+
+	// Config source file
+	relFile := h.ConfigFile
+	if home, err := os.UserHomeDir(); err == nil && strings.HasPrefix(h.ConfigFile, home) {
+		relFile = "~" + h.ConfigFile[len(home):]
+	}
+	sb.WriteString(fmt.Sprintf("%s %s\n", cardLabel.Render("Config File:"), dimStyle.Render(relFile)))
+
+	sb.WriteString("\n" + dimStyle.Render("── Quick Actions ────────────────────────"))
+	sb.WriteString(fmt.Sprintf("\n%s  %s  %s  %s  %s",
+		lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#5FD787")).Render("[Enter] Connect"),
+		lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#00D7D7")).Render("[a] Add"),
+		lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFAF00")).Render("[c] Copy Key"),
+		lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FF5F87")).Render("[d] Delete"),
+		lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#8A8A8A")).Render("[e] Edit"),
+	))
 
 	return sb.String()
 }
@@ -203,7 +324,7 @@ func RunTUI(homeDir string) (selectedAlias string, action string, err error) {
 
 	delegate := newCustomDelegate()
 	l := list.New(items, delegate, 80, 20)
-	l.Title = "SSH Connection Manager (sshx)"
+	l.Title = "sshx"
 	l.Styles.Title = titleStyle
 
 	keys := newListKeyMap()
