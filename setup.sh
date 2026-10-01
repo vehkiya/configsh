@@ -93,6 +93,102 @@ link_file() {
     success "Linked: $dest -> $src"
 }
 
+# -----------------------------------------------------------------------------
+# Zshrc Installer Diff & Rescue (Scenarios A & B)
+# -----------------------------------------------------------------------------
+rescue_zshrc_installer_changes() {
+    if [ -d "$DOTFILES_DIR/.git" ] && command -v git &>/dev/null; then
+        if ! git -C "$DOTFILES_DIR" diff --quiet .zshrc 2>/dev/null; then
+            echo ""
+            warn "Detected uncommitted modifications in .zshrc (likely appended by an installer):"
+
+            local added_lines
+            added_lines="$(git -C "$DOTFILES_DIR" diff -U0 .zshrc | grep '^[+]' | grep -v '^[+][+][+]' | sed 's/^[+]//' || true)"
+
+            if [ -n "$added_lines" ]; then
+                echo -e "${YELLOW}----------------------------------------------------------------${RESET}"
+                echo "$added_lines"
+                echo -e "${YELLOW}----------------------------------------------------------------${RESET}"
+
+                local rescue_choice="y"
+                if [ "$ASSUME_YES" != true ]; then
+                    read -r -p "Migrate these lines to ~/.zshrc.local and clean git repo? [Y/n] " rescue_choice || rescue_choice="y"
+                    rescue_choice="${rescue_choice:-y}"
+                fi
+
+                if [[ "$rescue_choice" =~ ^[Yy]$ ]]; then
+                    mkdir -p "$(dirname "$HOME/.zshrc.local")"
+                    {
+                        echo ""
+                        echo "# -----------------------------------------------------------------------------"
+                        echo "# Auto-rescued from .zshrc on $(date '+%Y-%m-%d %H:%M:%S')"
+                        echo "# -----------------------------------------------------------------------------"
+                        echo "$added_lines"
+                    } >> "$HOME/.zshrc.local"
+                    chmod 600 "$HOME/.zshrc.local"
+
+                    git -C "$DOTFILES_DIR" checkout .zshrc &>/dev/null || git -C "$DOTFILES_DIR" restore .zshrc &>/dev/null
+                    success "Migrated installer additions to ~/.zshrc.local and restored clean .zshrc in git!"
+                fi
+            fi
+            echo ""
+        fi
+    fi
+}
+
+rescue_physical_zshrc() {
+    local target="$HOME/.zshrc"
+    local repo_zshrc="$DOTFILES_DIR/.zshrc"
+
+    if [ -f "$target" ] && [ ! -L "$target" ]; then
+        warn "Found existing physical file at $target (not a symlink)."
+
+        local unique_lines=""
+        while IFS= read -r line || [ -n "$line" ]; do
+            local trimmed
+            trimmed="$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            [[ -z "$trimmed" || "$trimmed" =~ ^# ]] && continue
+
+            if ! grep -Fxq "$line" "$repo_zshrc" 2>/dev/null && ! grep -Fxq "$trimmed" "$repo_zshrc" 2>/dev/null; then
+                unique_lines+="$line"$'\n'
+            fi
+        done < "$target"
+
+        if [ -n "$unique_lines" ]; then
+            info "Detected custom or installer configuration in existing ~/.zshrc:"
+            echo -e "${CYAN}----------------------------------------------------------------${RESET}"
+            echo -n "$unique_lines"
+            echo -e "${CYAN}----------------------------------------------------------------${RESET}"
+
+            local migrate_choice="y"
+            if [ "$ASSUME_YES" != true ]; then
+                read -r -p "Migrate these custom lines to ~/.zshrc.local before symlinking? [Y/n] " migrate_choice || migrate_choice="y"
+                migrate_choice="${migrate_choice:-y}"
+            fi
+
+            if [[ "$migrate_choice" =~ ^[Yy]$ ]]; then
+                mkdir -p "$(dirname "$HOME/.zshrc.local")"
+                {
+                    echo ""
+                    echo "# -----------------------------------------------------------------------------"
+                    echo "# Rescued from physical ~/.zshrc on $(date '+%Y-%m-%d %H:%M:%S')"
+                    echo "# -----------------------------------------------------------------------------"
+                    echo -n "$unique_lines"
+                } >> "$HOME/.zshrc.local"
+                chmod 600 "$HOME/.zshrc.local"
+                success "Migrated custom configuration to ~/.zshrc.local"
+            fi
+        fi
+
+        warn "Backing up physical $target to ${target}.bak"
+        mv "$target" "${target}.bak"
+    fi
+}
+
+# Run zshrc rescue checks for Scenarios A & B
+rescue_zshrc_installer_changes
+rescue_physical_zshrc
+
 # Link .zshrc
 link_file "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 
