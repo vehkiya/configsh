@@ -134,6 +134,35 @@ check_tool "Core Shell & Terminal" "zsh" "Zsh (shell)" "zsh" "zsh" "zsh"
 check_tool "Core Shell & Terminal" "curl" "Curl (transfer utility)" "curl" "curl" "curl"
 check_tool "Core Shell & Terminal" "ghostty" "Ghostty (terminal emulator)" "ghostty" "ghostty" ""
 
+# Oh My Zsh Framework & Custom Plugins
+if [ -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
+    add_result "Core Shell & Terminal" "ok" "Oh My Zsh (framework)" "$HOME/.oh-my-zsh"
+else
+    add_result "Core Shell & Terminal" "missing" "Oh My Zsh (framework)" "Not installed (~/.oh-my-zsh)"
+    MISSING_NAMES+=("Oh My Zsh (shell framework)")
+fi
+
+CUSTOM_PLUGINS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
+if [ -d "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" ] || [ -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || [ -f "/opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+    add_result "Core Shell & Terminal" "ok" "Plugin: zsh-autosuggestions" "Installed"
+else
+    add_result "Core Shell & Terminal" "missing" "Plugin: zsh-autosuggestions" "Not installed"
+    MISSING_BREW+=("zsh-autosuggestions")
+    MISSING_PACMAN+=("zsh-autosuggestions")
+    MISSING_APT+=("zsh-autosuggestions")
+    MISSING_NAMES+=("zsh-autosuggestions plugin")
+fi
+
+if [ -d "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" ] || [ -f "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || [ -f "/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+    add_result "Core Shell & Terminal" "ok" "Plugin: zsh-syntax-highlighting" "Installed"
+else
+    add_result "Core Shell & Terminal" "missing" "Plugin: zsh-syntax-highlighting" "Not installed"
+    MISSING_BREW+=("zsh-syntax-highlighting")
+    MISSING_PACMAN+=("zsh-syntax-highlighting")
+    MISSING_APT+=("zsh-syntax-highlighting")
+    MISSING_NAMES+=("zsh-syntax-highlighting plugin")
+fi
+
 # -----------------------------------------------------------------------------
 # 2. Prompt & Navigation
 # -----------------------------------------------------------------------------
@@ -327,6 +356,15 @@ if [ "$CORE_MISSING" -gt 0 ]; then
     fi
 
     # Additional installation pointers
+    if [ ! -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
+        echo -e "  ${BLUE}↳ Oh My Zsh: ${BOLD}sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\" \"\" --unattended --keep-zshrc${RESET}"
+    fi
+    if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" ] && ! command -v pacman &>/dev/null && ! command -v brew &>/dev/null; then
+        echo -e "  ${BLUE}↳ zsh-autosuggestions: ${BOLD}git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions${RESET}"
+    fi
+    if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting" ] && ! command -v pacman &>/dev/null && ! command -v brew &>/dev/null; then
+        echo -e "  ${BLUE}↳ zsh-syntax-highlighting: ${BOLD}git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting${RESET}"
+    fi
     if ! command -v fnm &>/dev/null && ! command -v brew &>/dev/null; then
         echo -e "  ${BLUE}↳ Fnm: ${BOLD}curl -fsSL https://fnm.vercel.app/install | bash${RESET}"
     fi

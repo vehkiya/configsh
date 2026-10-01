@@ -128,9 +128,36 @@ if [ "$OS" = "Darwin" ]; then
 fi
 
 # -----------------------------------------------------------------------------
-# 3. Security & Permission Hardening Check
+# 3. Shell Framework & Plugins Check
 # -----------------------------------------------------------------------------
-header "[ 3. Security & Credential Permissions ]"
+header "[ 3. Shell Framework & Plugins ]"
+
+if [ -f "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]; then
+    pass "Oh My Zsh: Installed at $HOME/.oh-my-zsh"
+else
+    fail "Oh My Zsh: Not installed (~/.oh-my-zsh missing)"
+    echo -e "        ${YELLOW}↳ Remediation: sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\" \"\" --unattended --keep-zshrc${RESET}"
+fi
+
+CUSTOM_PLUGINS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
+if [ -d "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" ] || [ -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || [ -f "/opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+    pass "Plugin: zsh-autosuggestions installed"
+else
+    fail "Plugin: zsh-autosuggestions missing"
+    echo -e "        ${YELLOW}↳ Remediation: git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions${RESET}"
+fi
+
+if [ -d "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" ] || [ -f "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || [ -f "/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+    pass "Plugin: zsh-syntax-highlighting installed"
+else
+    fail "Plugin: zsh-syntax-highlighting missing"
+    echo -e "        ${YELLOW}↳ Remediation: git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting${RESET}"
+fi
+
+# -----------------------------------------------------------------------------
+# 4. Security & Permission Hardening Check
+# -----------------------------------------------------------------------------
+header "[ 4. Security & Credential Permissions ]"
 
 SECRET_DIRS=(
     "$HOME/.ssh"
@@ -189,9 +216,9 @@ for file in "${SECRET_FILES[@]}"; do
 done
 
 # -----------------------------------------------------------------------------
-# 4. Cryptographic SSH Key Passphrase Check
+# 5. Cryptography & SSH Keys at Rest
 # -----------------------------------------------------------------------------
-header "[ 4. Cryptography & SSH Keys at Rest ]"
+header "[ 5. Cryptography & SSH Keys at Rest ]"
 
 KEY_COUNT=0
 if [ -d "$HOME/.ssh" ]; then
@@ -213,9 +240,9 @@ if [ "$KEY_COUNT" -eq 0 ]; then
 fi
 
 # -----------------------------------------------------------------------------
-# 5. Live Agents & Keychain Integration
+# 6. Live Agents & Keychain Integration
 # -----------------------------------------------------------------------------
-header "[ 5. Live Agents & OS Keychain Integration ]"
+header "[ 6. Live Agents & OS Keychain Integration ]"
 
 # GPG Agent
 if command -v gpg-connect-agent &>/dev/null; then
@@ -283,9 +310,9 @@ if [ "$OS" = "Linux" ]; then
 fi
 
 # -----------------------------------------------------------------------------
-# 6. Supply Chain Defense
+# 7. Supply Chain Defense
 # -----------------------------------------------------------------------------
-header "[ 6. Supply Chain Defense ]"
+header "[ 7. Supply Chain Defense ]"
 
 if command -v npm &>/dev/null; then
     npm_ignore="$(npm config get ignore-scripts 2>/dev/null || true)"
