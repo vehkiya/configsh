@@ -177,12 +177,12 @@ if command -v zoxide &>/dev/null && [ "${ASSUME_YES:-false}" != true ]; then
         if [[ "$replace_cd_ans" =~ ^[Yy]$ ]]; then
             echo "" >> "$HOME/.zshrc.local"
             echo '# Zoxide: Replace standard cd command' >> "$HOME/.zshrc.local"
-            echo 'export ZOXIDE_REPLACE_CD="true"' >> "$HOME/.zshrc.local"
+            echo 'export ZOXIDE_REPLACE_CD="${ZOXIDE_REPLACE_CD:-true}"' >> "$HOME/.zshrc.local"
             success "Configured zoxide to replace 'cd' (ZOXIDE_REPLACE_CD=true in ~/.zshrc.local)"
         else
             echo "" >> "$HOME/.zshrc.local"
             echo '# Zoxide: Keep standard cd, use z and zi' >> "$HOME/.zshrc.local"
-            echo 'export ZOXIDE_REPLACE_CD="false"' >> "$HOME/.zshrc.local"
+            echo 'export ZOXIDE_REPLACE_CD="${ZOXIDE_REPLACE_CD:-false}"' >> "$HOME/.zshrc.local"
             success "Kept standard 'cd'; use 'z' and 'zi' for zoxide jumping"
         fi
     fi
