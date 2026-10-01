@@ -238,8 +238,12 @@ if command -v fzf &>/dev/null; then
 
     local config_files=()
     [[ -f "$HOME/.ssh/config" ]] && config_files+=("$HOME/.ssh/config")
-    for f in "$HOME/.ssh/config.d/"* "$HOME/.ssh/conf.d/"*; do
-      [[ -f "$f" ]] && config_files+=("$f")
+    for d in "$HOME/.ssh/config.d" "$HOME/.ssh/conf.d"; do
+      if [[ -d "$d" ]]; then
+        for f in "$d"/*(N); do
+          [[ -f "$f" ]] && config_files+=("$f")
+        done
+      fi
     done
 
     if [[ ${#config_files[@]} -eq 0 ]]; then
