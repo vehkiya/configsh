@@ -248,6 +248,11 @@ check_optional_tool "Linters & Manifest Tools (Optional)" "yq" "Yq (YAML process
 check_optional_tool "Linters & Manifest Tools (Optional)" "jq" "Jq (JSON processor)" "jq" "jq" "jq"
 
 # -----------------------------------------------------------------------------
+# 8. Terminal File Managers (Optional)
+# -----------------------------------------------------------------------------
+check_optional_tool "Terminal File Managers (Optional)" "yazi" "Yazi (terminal file manager)" "yazi" "yazi" "yazi"
+
+# -----------------------------------------------------------------------------
 # Print Formatted Prerequisites Summary
 # -----------------------------------------------------------------------------
 
