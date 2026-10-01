@@ -297,6 +297,8 @@ check_optional_tool "Linters & Manifest Tools (Optional)" "jq" "Jq (JSON process
 # -----------------------------------------------------------------------------
 check_optional_tool "Text Search & Inspection (Optional)" "rg" "Ripgrep (fast text search)" "ripgrep" "ripgrep" "ripgrep"
 check_optional_tool "Text Search & Inspection (Optional)" "bat" "Bat (syntax-highlighted viewer)" "bat" "bat" "bat"
+check_optional_tool "Text Search & Inspection (Optional)" "glow" "Glow (terminal markdown reader)" "glow" "glow" ""
+
 
 # -----------------------------------------------------------------------------
 # 9. Terminal Emulators & File Managers (Optional)

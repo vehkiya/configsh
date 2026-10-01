@@ -13,7 +13,70 @@ import (
 	"strings"
 )
 
-// HostEntry represents a configuration block for an SSH host in ~/.ssh/config.
+// HostItem represents an existing parsed SSH host block.
+type HostItem struct {
+	Alias          string
+	AllAliases     []string
+	HostName       string
+	User           string
+	Port           int
+	IdentityFile   string
+	IdentitiesOnly bool
+	PubkeyAuth     bool
+	PasswordAuth   bool
+	ProxyJump      string
+	ConfigFile     string
+	RawLines       []string
+}
+
+// Title returns the primary display title for Bubble Tea list.
+func (h HostItem) Title() string {
+	return h.Alias
+}
+
+// Description returns a concise summary for Bubble Tea list.
+func (h HostItem) Description() string {
+	var parts []string
+
+	target := ""
+	if h.User != "" {
+		target += h.User + "@"
+	}
+	if h.HostName != "" {
+		target += h.HostName
+	} else {
+		target += h.Alias
+	}
+	if h.Port > 0 && h.Port != 22 {
+		target += fmt.Sprintf(":%d", h.Port)
+	}
+	parts = append(parts, target)
+
+	if !h.PubkeyAuth || h.PasswordAuth {
+		parts = append(parts, "[Password Auth]")
+	} else if h.IdentityFile != "" {
+		parts = append(parts, fmt.Sprintf("[Key: %s]", filepath.Base(h.IdentityFile)))
+	}
+
+	if h.ProxyJump != "" {
+		parts = append(parts, fmt.Sprintf("[Via: %s]", h.ProxyJump))
+	}
+
+	return strings.Join(parts, "  •  ")
+}
+
+// FilterValue implements list.Item for fuzzy filtering.
+func (h HostItem) FilterValue() string {
+	return fmt.Sprintf("%s %s %s %s %s",
+		strings.Join(h.AllAliases, " "),
+		h.HostName,
+		h.User,
+		strconv.Itoa(h.Port),
+		h.IdentityFile,
+	)
+}
+
+// HostEntry represents a newly configured host to be formatted and added.
 type HostEntry struct {
 	Alias          string
 	HostName       string
@@ -21,12 +84,12 @@ type HostEntry struct {
 	Port           int
 	IdentityFile   string
 	IdentitiesOnly bool
-	PubkeyAuth     bool   // If false, adds 'PubkeyAuthentication no'
-	PasswordAuth   bool   // If true, adds 'PreferredAuthentications password,keyboard-interactive'
-	PreferredAuths string // Custom PreferredAuthentications string
+	PubkeyAuth     bool
+	PasswordAuth   bool
+	PreferredAuths string
 }
 
-// Format renders the HostEntry into standard OpenSSH configuration syntax.
+// Format renders the HostEntry into standard OpenSSH syntax.
 func (h HostEntry) Format() string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("Host %s\n", h.Alias))
@@ -58,12 +121,147 @@ func (h HostEntry) Format() string {
 	return sb.String()
 }
 
-// ParseTarget parses connection strings such as:
-//   - "user@host:port"
-//   - "user@host"
-//   - "host:port"
-//   - "host"
-//   - "ssh://user@host:port"
+// FindConfigFiles gathers ~/.ssh/config and any included fragments in ~/.ssh/config.d/
+func FindConfigFiles(homeDir string) []string {
+	var files []string
+	mainConfig := filepath.Join(homeDir, ".ssh", "config")
+	if fi, err := os.Stat(mainConfig); err == nil && !fi.IsDir() {
+		files = append(files, mainConfig)
+	}
+
+	for _, sub := range []string{"config.d", "conf.d"} {
+		dir := filepath.Join(homeDir, ".ssh", sub)
+		entries, err := os.ReadDir(dir)
+		if err == nil {
+			for _, e := range entries {
+				if !e.IsDir() && !strings.HasPrefix(e.Name(), ".") {
+					files = append(files, filepath.Join(dir, e.Name()))
+				}
+			}
+		}
+	}
+	return files
+}
+
+// LoadAllHosts parses all SSH config files and returns a list of configured hosts.
+func LoadAllHosts(homeDir string) ([]HostItem, error) {
+	files := FindConfigFiles(homeDir)
+	if len(files) == 0 {
+		return nil, nil
+	}
+
+	var hosts []HostItem
+	seenAliases := make(map[string]bool)
+
+	for _, file := range files {
+		data, err := os.ReadFile(file)
+		if err != nil {
+			continue
+		}
+
+		lines := strings.Split(string(data), "\n")
+		var currentHost *HostItem
+
+		finishCurrent := func() {
+			if currentHost != nil && len(currentHost.AllAliases) > 0 {
+				if !seenAliases[currentHost.Alias] {
+					seenAliases[currentHost.Alias] = true
+					if currentHost.Port == 0 {
+						currentHost.Port = 22
+					}
+					hosts = append(hosts, *currentHost)
+				}
+			}
+			currentHost = nil
+		}
+
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "#") || trimmed == "" {
+				if currentHost != nil {
+					currentHost.RawLines = append(currentHost.RawLines, line)
+				}
+				continue
+			}
+
+			fields := strings.Fields(trimmed)
+			if len(fields) == 0 {
+				continue
+			}
+
+			key := strings.ToLower(fields[0])
+
+			if key == "host" || key == "match" {
+				finishCurrent()
+
+				if key == "host" && len(fields) > 1 {
+					var validAliases []string
+					for _, alias := range fields[1:] {
+						if !strings.ContainsAny(alias, "*?!") {
+							validAliases = append(validAliases, alias)
+						}
+					}
+
+					if len(validAliases) > 0 {
+						currentHost = &HostItem{
+							Alias:        validAliases[0],
+							AllAliases:   validAliases,
+							Port:         22,
+							PubkeyAuth:   true,
+							ConfigFile:   file,
+							RawLines:     []string{line},
+						}
+					}
+				}
+				continue
+			}
+
+			if currentHost != nil {
+				currentHost.RawLines = append(currentHost.RawLines, line)
+				val := ""
+				if len(fields) > 1 {
+					val = strings.Join(fields[1:], " ")
+					// Remove surrounding quotes if present
+					val = strings.Trim(val, `"'`)
+				}
+
+				switch key {
+				case "hostname":
+					currentHost.HostName = val
+				case "user":
+					currentHost.User = val
+				case "port":
+					if p, err := strconv.Atoi(val); err == nil && p > 0 {
+						currentHost.Port = p
+					}
+				case "identityfile":
+					currentHost.IdentityFile = val
+				case "identitiesonly":
+					currentHost.IdentitiesOnly = strings.EqualFold(val, "yes")
+				case "pubkeyauthentication":
+					if strings.EqualFold(val, "no") {
+						currentHost.PubkeyAuth = false
+					}
+				case "preferredauthentications":
+					if strings.Contains(strings.ToLower(val), "password") {
+						currentHost.PasswordAuth = true
+					}
+				case "proxyjump":
+					currentHost.ProxyJump = val
+				}
+			}
+		}
+		finishCurrent()
+	}
+
+	sort.Slice(hosts, func(i, j int) bool {
+		return strings.ToLower(hosts[i].Alias) < strings.ToLower(hosts[j].Alias)
+	})
+
+	return hosts, nil
+}
+
+// ParseTarget parses strings such as "user@host:port" or "host:port".
 func ParseTarget(input string) (user, host string, port int) {
 	input = strings.TrimSpace(input)
 	input = strings.TrimPrefix(input, "ssh://")
@@ -85,15 +283,12 @@ func ParseTarget(input string) (user, host string, port int) {
 		host = input
 	}
 
-	// Remove bracket wrappers if IPv6 literal like [::1]
 	host = strings.TrimPrefix(host, "[")
 	host = strings.TrimSuffix(host, "]")
-
 	return user, host, port
 }
 
-// HasHost checks whether the given alias (or any whitespace-separated alias)
-// is already defined in any Host directive within the configuration content.
+// HasHost checks whether the given alias exists in the configuration content.
 func HasHost(content, alias string) bool {
 	targets := strings.Fields(alias)
 	if len(targets) == 0 {
@@ -119,7 +314,7 @@ func HasHost(content, alias string) bool {
 	return false
 }
 
-// RemoveHost removes any Host block matching the given alias (or whitespace-separated aliases).
+// RemoveHost removes any Host block matching the given alias.
 func RemoveHost(content, alias string) string {
 	targets := strings.Fields(alias)
 	if len(targets) == 0 {
@@ -159,7 +354,6 @@ func RemoveHost(content, alias string) string {
 }
 
 // InsertHost inserts a formatted host block before any wildcard 'Host *' block (and its comments).
-// If no 'Host *' block is present, it appends the block to the end of the configuration.
 func InsertHost(content, block string) string {
 	block = strings.TrimRight(block, "\n")
 	if strings.TrimSpace(content) == "" {
@@ -169,7 +363,6 @@ func InsertHost(content, block string) string {
 	lines := strings.Split(content, "\n")
 	wildcardIdx := -1
 
-	// Locate the wildcard 'Host *' directive
 	for i, line := range lines {
 		fields := strings.Fields(strings.TrimSpace(line))
 		if len(fields) == 2 && strings.EqualFold(fields[0], "Host") && fields[1] == "*" {
@@ -179,12 +372,10 @@ func InsertHost(content, block string) string {
 	}
 
 	if wildcardIdx == -1 {
-		// No Host * found: append to bottom cleanly
 		trimmed := strings.TrimRight(content, "\n")
 		return trimmed + "\n\n" + block + "\n"
 	}
 
-	// Walk backwards to find comments immediately attached to 'Host *'
 	insertIdx := wildcardIdx
 	for i := wildcardIdx - 1; i >= 0; i-- {
 		trimmed := strings.TrimSpace(lines[i])
@@ -195,14 +386,12 @@ func InsertHost(content, block string) string {
 		}
 	}
 
-	// Build the new document with clean spacing
 	var sb strings.Builder
 	for i := 0; i < insertIdx; i++ {
 		sb.WriteString(lines[i])
 		sb.WriteString("\n")
 	}
 
-	// Ensure blank line before new block if there was prior content
 	before := strings.TrimRight(sb.String(), "\n")
 	if len(before) > 0 {
 		sb.Reset()
@@ -215,7 +404,6 @@ func InsertHost(content, block string) string {
 	sb.WriteString(block)
 	sb.WriteString("\n\n")
 
-	// Append remaining lines starting from insertIdx
 	for i := insertIdx; i < len(lines); i++ {
 		sb.WriteString(lines[i])
 		if i < len(lines)-1 {
@@ -226,7 +414,6 @@ func InsertHost(content, block string) string {
 	return cleanConsecutiveBlankLines(sb.String())
 }
 
-// cleanConsecutiveBlankLines collapses 3+ consecutive newlines into 2.
 func cleanConsecutiveBlankLines(s string) string {
 	re := regexp.MustCompile(`\n{3,}`)
 	cleaned := re.ReplaceAllString(s, "\n\n")
@@ -236,8 +423,7 @@ func cleanConsecutiveBlankLines(s string) string {
 	return cleaned
 }
 
-// DiscoverKeys inspects sshDir (usually ~/.ssh) for private keys.
-// Returns a list of absolute paths.
+// DiscoverKeys inspects ~/.ssh for private keys.
 func DiscoverKeys(sshDir string) ([]string, error) {
 	entries, err := os.ReadDir(sshDir)
 	if err != nil {
@@ -280,8 +466,7 @@ func DiscoverKeys(sshDir string) ([]string, error) {
 	return keys, nil
 }
 
-// AtomicWrite safely writes data to targetPath with the given permissions by first writing
-// to a temporary file in the same directory, syncing to disk, and renaming.
+// AtomicWrite writes data atomically to targetPath with given permissions.
 func AtomicWrite(targetPath string, data []byte, perm os.FileMode) error {
 	dir := filepath.Dir(targetPath)
 	if err := os.MkdirAll(dir, 0700); err != nil {
@@ -310,19 +495,15 @@ func AtomicWrite(targetPath string, data []byte, perm os.FileMode) error {
 	if _, err := tmpFile.Write(data); err != nil {
 		return fmt.Errorf("failed to write to temp file: %w", err)
 	}
-
 	if err := tmpFile.Sync(); err != nil {
 		return fmt.Errorf("failed to sync temp file: %w", err)
 	}
-
 	if err := tmpFile.Close(); err != nil {
 		return fmt.Errorf("failed to close temp file: %w", err)
 	}
-
 	if err := os.Chmod(tmpName, perm); err != nil {
 		return fmt.Errorf("failed to set permissions on temp file: %w", err)
 	}
-
 	if err := os.Rename(tmpName, targetPath); err != nil {
 		return fmt.Errorf("failed to rename temp file to %s: %w", targetPath, err)
 	}

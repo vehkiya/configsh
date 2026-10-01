@@ -223,59 +223,16 @@ if command -v rg &>/dev/null && command -v fzf &>/dev/null; then
   }
 fi
 
-# fssh: Interactive SSH host picker with live config preview
-if command -v fzf &>/dev/null; then
-  fssh() {
-    local query=""
-    local -a ssh_args=()
-
-    # Pre-populate search query if first argument is not a flag
-    if [[ -n "${1:-}" && "${1:0:1}" != "-" ]]; then
-      query="$1"
-      shift
-    fi
-    ssh_args=("$@")
-
-    local config_files=()
-    [[ -f "$HOME/.ssh/config" ]] && config_files+=("$HOME/.ssh/config")
-    for d in "$HOME/.ssh/config.d" "$HOME/.ssh/conf.d"; do
-      if [[ -d "$d" ]]; then
-        for f in "$d"/*(N); do
-          [[ -f "$f" ]] && config_files+=("$f")
-        done
-      fi
-    done
-
-    if [[ ${#config_files[@]} -eq 0 ]]; then
-      echo "fssh: No SSH config files found in ~/.ssh/" >&2
-      return 1
-    fi
-
-    local host
-    host=$(
-      awk '
-        tolower($1) == "host" {
-          for (i = 2; i <= NF; i++) {
-            if ($i !~ /[*?!]/) print $i
-          }
-        }
-      ' "${config_files[@]}" 2>/dev/null | sort -u | fzf \
-        --prompt="SSH > " \
-        --query="$query" \
-        --height=60% \
-        --reverse \
-        --preview='ssh -G {} 2>/dev/null | grep -E "^(user|hostname|port|identityfile|proxyjump) " | awk "{printf \"%-14s %s\n\", \$1 \":\", \$2}"' \
-        --preview-window="right,50%,border-left,<80(down,50%)"
-    )
-
-    if [[ -n "$host" ]]; then
-      echo "Connecting to $host..."
-      ssh "${ssh_args[@]}" "$host"
-    fi
-  }
+# Terminal markdown reader & cheatsheet viewer
+if command -v glow &>/dev/null; then
+  alias cheatsheet="glow -s dark $HOME/projects/configsh/CHEATSHEET.md"
+  alias cs="cheatsheet"
 fi
 
-# SSH Host Adder aliases (native compiled utility: ~/.local/bin/ssh-add-host)
-alias fssh-add="ssh-add-host"
-alias add-ssh-host="ssh-add-host"
+
+# sshx: TUI SSH Connection Manager & Host Adder (native compiled utility: ~/.local/bin/sshx)
+alias fssh="sshx"
+alias fssh-add="sshx add"
+alias ssh-add-host="sshx add"
+
 

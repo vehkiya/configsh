@@ -36,4 +36,11 @@ if [ -d "$DOTFILES_DIR/cmd" ]; then
             success "Installed $tool_name"
         fi
     done
+
+    # Symlink backwards-compatible aliases
+    if [ -x "$BIN_DIR/sshx" ]; then
+        ln -sf "$BIN_DIR/sshx" "$BIN_DIR/ssh-add-host"
+        success "Linked ssh-add-host -> sshx"
+    fi
 fi
+
