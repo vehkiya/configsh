@@ -141,6 +141,7 @@ check_tool "Prompt & Navigation" "starship" "Starship (cross-shell prompt)" "sta
 check_tool "Prompt & Navigation" "direnv" "Direnv (directory environment)" "direnv" "direnv" "direnv"
 check_tool "Prompt & Navigation" "eza" "Eza (modern replacement for ls)" "eza" "eza" "eza"
 check_tool "Prompt & Navigation" "fzf" "Fzf (fuzzy finder)" "fzf" "fzf" "fzf"
+check_tool "Prompt & Navigation" "zoxide" "Zoxide (smarter cd jump)" "zoxide" "zoxide" "zoxide"
 
 # -----------------------------------------------------------------------------
 # 3. Runtimes & Editors

@@ -167,4 +167,25 @@ else
     success "Secured ~/.zshrc.local permissions (chmod 600)"
 fi
 
+# Check if zoxide cd-replacement preference is set in ~/.zshrc.local
+if command -v zoxide &>/dev/null && [ "${ASSUME_YES:-false}" != true ]; then
+    if ! grep -q "ZOXIDE_REPLACE_CD" "$HOME/.zshrc.local" 2>/dev/null; then
+        echo ""
+        info "Zoxide is installed. It provides 'z' & 'zi', but can also replace 'cd' completely."
+        read -r -p "Would you like zoxide to replace the standard 'cd' command completely? [y/N] " replace_cd_ans || replace_cd_ans="n"
+        replace_cd_ans="${replace_cd_ans:-n}"
+        if [[ "$replace_cd_ans" =~ ^[Yy]$ ]]; then
+            echo "" >> "$HOME/.zshrc.local"
+            echo '# Zoxide: Replace standard cd command' >> "$HOME/.zshrc.local"
+            echo 'export ZOXIDE_REPLACE_CD="true"' >> "$HOME/.zshrc.local"
+            success "Configured zoxide to replace 'cd' (ZOXIDE_REPLACE_CD=true in ~/.zshrc.local)"
+        else
+            echo "" >> "$HOME/.zshrc.local"
+            echo '# Zoxide: Keep standard cd, use z and zi' >> "$HOME/.zshrc.local"
+            echo 'export ZOXIDE_REPLACE_CD="false"' >> "$HOME/.zshrc.local"
+            success "Kept standard 'cd'; use 'z' and 'zi' for zoxide jumping"
+        fi
+    fi
+fi
+
 echo ""

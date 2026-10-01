@@ -153,3 +153,12 @@ export SDKMAN_DIR="$HOME/.sdkman"
 
 # Local / Machine-specific secrets & overrides (never committed to git)
 [[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
+
+# Zoxide navigation (smarter cd command - set ZOXIDE_REPLACE_CD=true in ~/.zshrc.local to alias 'cd')
+if command -v zoxide &>/dev/null; then
+  if [[ "${ZOXIDE_REPLACE_CD:-false}" == "true" ]]; then
+    eval "$(zoxide init zsh --cmd cd)"
+  else
+    eval "$(zoxide init zsh)"
+  fi
+fi
