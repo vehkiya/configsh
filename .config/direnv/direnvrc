@@ -30,7 +30,11 @@ use_vault() {
   local field="${3:-value}"
 
   local cmd=""
-  if command -v bao &>/dev/null; then
+  if [ -n "${BAO_ADDR:-}" ] && command -v bao &>/dev/null; then
+    cmd="bao"
+  elif [ -n "${VAULT_ADDR:-}" ] && command -v vault &>/dev/null; then
+    cmd="vault"
+  elif command -v bao &>/dev/null; then
     cmd="bao"
   elif command -v vault &>/dev/null; then
     cmd="vault"

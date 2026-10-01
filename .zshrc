@@ -103,13 +103,20 @@ alias v="vault"
 alias b="bao"
 alias p="pass"
 
-# Vault & OpenBao completion / compatibility
+# Vault & OpenBao completion / bidirectional compatibility
+if command -v bao &>/dev/null && ! command -v vault &>/dev/null; then
+  alias vault="bao"
+elif command -v vault &>/dev/null && ! command -v bao &>/dev/null; then
+  alias bao="vault"
+fi
+
 if command -v bao &>/dev/null; then
   complete -o nospace -C bao bao 2>/dev/null || true
-  command -v vault &>/dev/null || alias vault="bao"
+  complete -o nospace -C bao vault 2>/dev/null || true
 fi
 if command -v vault &>/dev/null; then
   complete -o nospace -C vault vault 2>/dev/null || true
+  complete -o nospace -C vault bao 2>/dev/null || true
 fi
 
 # Homebrew environment (supports Apple Silicon macOS, Intel macOS, and Linuxbrew)

@@ -116,15 +116,15 @@ fi
 check_tool "Secrets & Vault Management" "pass" "Pass (password manager)" "pass" "pass" "pass"
 
 if command -v bao &>/dev/null; then
-    add_result "Secrets & Vault Management" "ok" "OpenBao CLI (vault manager)" "$(command -v bao)"
+    add_result "Secrets & Vault Management" "ok" "Vault CLI: OpenBao" "$(command -v bao)"
 elif command -v vault &>/dev/null; then
-    add_result "Secrets & Vault Management" "ok" "HashiCorp Vault CLI" "$(command -v vault)"
+    add_result "Secrets & Vault Management" "ok" "Vault CLI: HashiCorp Vault" "$(command -v vault)"
 else
-    add_result "Secrets & Vault Management" "missing" "OpenBao / Vault CLI" "Not installed"
-    MISSING_BREW+=("openbao")
-    MISSING_PACMAN+=("openbao")
-    MISSING_APT+=("openbao")
-    MISSING_NAMES+=("OpenBao / Vault CLI")
+    add_result "Secrets & Vault Management" "missing" "Vault CLI (vault or bao)" "Not installed"
+    MISSING_BREW+=("vault")
+    MISSING_PACMAN+=("vault")
+    MISSING_APT+=("vault")
+    MISSING_NAMES+=("Vault CLI (HashiCorp Vault or OpenBao)")
 fi
 
 # OS Keychain integration for GPG
