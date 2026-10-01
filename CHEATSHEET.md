@@ -24,6 +24,7 @@ Replace your old command-line habits with these faster, modern alternatives:
 | `docker` / `docker-compose` | **`d`** / **`dc`** | Muscle-memory short aliases. |
 | `pass show ...` | **`p`** | Fast secret lookup (`p github/token`). |
 | Remembering SSH hostnames / IPs | **`fssh`** *(or `fssh "host"`)* | Interactive fuzzy picker for all hosts in `~/.ssh/config`. Shows live preview of user, port, and identity file; <kbd>Enter</kbd> connects immediately. |
+| Always typing `ssh user@host...` | **`ssh-add-host`** *(or `fssh-add`)* | Interactive wizard to configure and save SSH hosts to `~/.ssh/config`. Supports key/password auth, key generation, `ssh-copy-id`, and instant test connection. |
 | Typing commands with API keys/tokens | `<space>command` | Prefix with a **single space**; it will never be written to your shell history. |
 
 ---
@@ -47,6 +48,7 @@ Replace your old command-line habits with these faster, modern alternatives:
 | **`zi`** | `zoxide` + `fzf` | Interactive directory jumper using an `fzf` fuzzy menu. |
 | **`y [path]`** | `yazi` | Terminal file manager with automatic working directory synchronization on exit. |
 | **`fssh [query]`** | `fzf` + `ssh` | **Interactive SSH host picker**: fuzzy-search configured hosts from `~/.ssh/config` with live config preview (`User`, `HostName`, `Port`, `IdentityFile`). Pressing <kbd>Enter</kbd> connects immediately. |
+| **`ssh-add-host [target] [alias]`** | Shell / SSH | **Interactive SSH host adder** (`fssh-add` / `add-ssh-host`): adds host to `~/.ssh/config` before `Host *`. Supports key auth, password-only hardening (`PubkeyAuthentication no`), key discovery/generation, `ssh-copy-id`, and instant connect. |
 | <kbd>Tab</kbd> | `fzf-tab` | Interactive completion menu: fuzzy-matches completion candidates with live directory (`eza`) and file (`bat`) previews. |
 | <kbd>Ctrl</kbd> + <kbd>R</kbd> | `fzf` | Interactive command history search with fuzzy filtering. |
 | <kbd>Ctrl</kbd> + <kbd>T</kbd> | `fzf` | Interactive file finder; pastes selected file path into the current command line. |
