@@ -21,9 +21,13 @@ setopt HIST_REDUCE_BLANKS        # Remove superfluous blanks
 setopt SHARE_HISTORY             # Share history across sessions
 
 
+# Git auto-fetch interval (default: 30 minutes = 1800 seconds)
+export GIT_AUTO_FETCH_INTERVAL="${GIT_AUTO_FETCH_INTERVAL:-1800}"
+
 # Cross-platform plugins
 plugins=(
   git
+  git-auto-fetch
   rsync
   golang
   docker
