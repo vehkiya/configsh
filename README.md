@@ -49,7 +49,7 @@ source ~/.zshrc
   * Modern tab completion via **`fzf-tab`** with live previews (`eza` for directories, `bat` for files).
   * Interactive text search via **`fif`** (`ripgrep` + `fzf` + `bat` preview with direct editor jumping).
   * Interactive SSH host picker via **`fssh`** (`fzf` picker with live evaluated host config preview).
-  * Interactive SSH host adder via **`ssh-add-host`** (`fssh-add` / `add-ssh-host`: key/password auth, key discovery, `ssh-copy-id`).
+  * Interactive SSH host adder via **`ssh-add-host`** (`fssh-add` / `add-ssh-host`: compiled Go utility in `cmd/ssh-add-host` with key/password auth, key discovery, `ssh-copy-id`).
   * History privacy (`HIST_IGNORE_SPACE` — commands starting with a space are never written to disk).
   * Secrets and tool completions (`vault`, `pass`, aliases `v`, `b`, `p`).
   * Local machine configuration integration (`~/.zshrc.local`).

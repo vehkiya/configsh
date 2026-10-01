@@ -191,6 +191,7 @@ check_tool "Prompt & Navigation" "zoxide" "Zoxide (smarter cd jump)" "zoxide" "z
 # 3. Runtimes & Editors
 # -----------------------------------------------------------------------------
 check_tool "Runtimes & Editors" "fnm" "Fnm (fast Node manager)" "fnm" "fnm" ""
+check_tool "Runtimes & Editors" "go" "Go (programming language)" "go" "go" "golang-go"
 
 if command -v nvim &>/dev/null; then
     add_result "Runtimes & Editors" "ok" "Neovim (editor)" "$(command -v nvim)"

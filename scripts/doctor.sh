@@ -342,6 +342,25 @@ else
 fi
 
 # -----------------------------------------------------------------------------
+# 8. Native Compiled Utilities
+# -----------------------------------------------------------------------------
+header "[ 8. Native Compiled Utilities ]"
+
+if [ -d "$DOTFILES_DIR/cmd" ]; then
+    for tool_dir in "$DOTFILES_DIR"/cmd/*; do
+        if [ -d "$tool_dir" ]; then
+            tool_name="$(basename "$tool_dir")"
+            bin_path="$HOME/.local/bin/$tool_name"
+            if [ -x "$bin_path" ]; then
+                pass "Compiled utility: $bin_path"
+            else
+                fail "Missing compiled utility: $bin_path (run ./setup.sh to compile)"
+            fi
+        fi
+    done
+fi
+
+# -----------------------------------------------------------------------------
 # Summary & Status
 # -----------------------------------------------------------------------------
 echo -e "\n${BOLD}================================================================${RESET}"

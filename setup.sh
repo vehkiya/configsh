@@ -58,6 +58,9 @@ fi
 # shellcheck source=scripts/link-configs.sh
 source "$DOTFILES_DIR/scripts/link-configs.sh"
 
+# shellcheck source=scripts/build-tools.sh
+source "$DOTFILES_DIR/scripts/build-tools.sh"
+
 # shellcheck source=scripts/harden-permissions.sh
 source "$DOTFILES_DIR/scripts/harden-permissions.sh"
 
