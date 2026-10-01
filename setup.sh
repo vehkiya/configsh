@@ -10,6 +10,15 @@ DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/common.sh
 source "$DOTFILES_DIR/scripts/lib/common.sh" "$@"
 
+# Handle read-only verification flags (--verify / --doctor / --check)
+for arg in "$@"; do
+    case "$arg" in
+        --verify|--doctor|--check)
+            exec "$DOTFILES_DIR/scripts/doctor.sh"
+            ;;
+    esac
+done
+
 echo -e "\n${BOLD}================================================================${RESET}"
 echo -e "${BOLD}       Cross-Platform Dotfiles Setup & Hardening Script       ${RESET}"
 echo -e "${BOLD}================================================================${RESET}\n"
