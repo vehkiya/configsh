@@ -2,7 +2,7 @@
 # Theme & Appearance
 # =============================================================================
 # Matched to starship.toml's Gruvbox Dark palette (change to 'Ayu Mirage' if preferred)
-theme = gruvbox-dark
+theme = "Gruvbox Dark"
 
 # Background transparency (0.9 = 90% opaque / 10% transparent)
 background-opacity = 0.9
