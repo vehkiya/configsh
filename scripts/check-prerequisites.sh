@@ -97,7 +97,6 @@ check_tool "Prompt & Navigation" "fzf" "Fzf (fuzzy finder)" "fzf" "fzf" "fzf"
 
 # 3. Runtimes & Editors
 check_tool "Runtimes & Editors" "fnm" "Fnm (fast Node manager)" "fnm" "fnm" ""
-check_tool "Runtimes & Editors" "bun" "Bun (fast JS/TS runtime)" "bun" "bun" ""
 
 if command -v nvim &>/dev/null; then
     add_result "Runtimes & Editors" "ok" "Neovim (editor)" "$(command -v nvim)"
@@ -235,9 +234,6 @@ elif [ "$OS" = "Linux" ]; then
 fi
 
 # Additional installation pointers
-if ! command -v bun &>/dev/null; then
-    echo -e "  ${BLUE}↳ Bun: ${BOLD}curl -fsSL https://bun.sh/install | bash${RESET}"
-fi
 if ! command -v fnm &>/dev/null && ! command -v brew &>/dev/null; then
     echo -e "  ${BLUE}↳ Fnm: ${BOLD}curl -fsSL https://fnm.vercel.app/install | bash${RESET}"
 fi
