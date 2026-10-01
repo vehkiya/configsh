@@ -26,18 +26,32 @@ MISSING_PACMAN=()
 MISSING_APT=()
 MISSING_NAMES=()
 
+OPT_MISSING_BREW=()
+OPT_MISSING_PACMAN=()
+OPT_MISSING_APT=()
+OPT_MISSING_NAMES=()
+
 RESULTS_CATEGORY=()
 RESULTS_STATUS=()
 RESULTS_NAME=()
 RESULTS_DETAIL=()
 
-TOTAL_CHECKED=0
-INSTALLED_COUNT=0
-MISSING_COUNT=0
+CORE_TOTAL=0
+CORE_INSTALLED=0
+CORE_MISSING=0
+
+OPT_TOTAL=0
+OPT_INSTALLED=0
+OPT_MISSING=0
+
+dedup() {
+    [ "$#" -eq 0 ] && return
+    printf '%s\n' "$@" | sort -u | tr '\n' ' ' | sed 's/[[:space:]]*$//'
+}
 
 add_result() {
     local category="$1"
-    local status="$2"     # "ok", "missing", "warn"
+    local status="$2"     # "ok", "missing", "warn", "opt_ok", "opt_missing"
     local name="$3"
     local detail="$4"
 
@@ -45,15 +59,25 @@ add_result() {
     RESULTS_STATUS+=("$status")
     RESULTS_NAME+=("$name")
     RESULTS_DETAIL+=("$detail")
-    TOTAL_CHECKED=$((TOTAL_CHECKED + 1))
 
-    if [ "$status" = "ok" ]; then
-        INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
-    elif [ "$status" = "warn" ]; then
-        INSTALLED_COUNT=$((INSTALLED_COUNT + 1))
-    else
-        MISSING_COUNT=$((MISSING_COUNT + 1))
-    fi
+    case "$status" in
+        ok|warn)
+            CORE_TOTAL=$((CORE_TOTAL + 1))
+            CORE_INSTALLED=$((CORE_INSTALLED + 1))
+            ;;
+        missing)
+            CORE_TOTAL=$((CORE_TOTAL + 1))
+            CORE_MISSING=$((CORE_MISSING + 1))
+            ;;
+        opt_ok)
+            OPT_TOTAL=$((OPT_TOTAL + 1))
+            OPT_INSTALLED=$((OPT_INSTALLED + 1))
+            ;;
+        opt_missing)
+            OPT_TOTAL=$((OPT_TOTAL + 1))
+            OPT_MISSING=$((OPT_MISSING + 1))
+            ;;
+    esac
 }
 
 check_tool() {
@@ -79,23 +103,48 @@ check_tool() {
     fi
 }
 
-# -----------------------------------------------------------------------------
-# Run Tool Checks
-# -----------------------------------------------------------------------------
+check_optional_tool() {
+    local category="$1"
+    local cmd="$2"
+    local name="$3"
+    local brew_pkg="$4"
+    local pacman_pkg="$5"
+    local apt_pkg="$6"
 
+    if command -v "$cmd" &>/dev/null; then
+        local bin_path
+        bin_path="$(command -v "$cmd")"
+        add_result "$category" "opt_ok" "$name" "$bin_path"
+        return 0
+    else
+        add_result "$category" "opt_missing" "$name" "Not installed (optional)"
+        [[ -n "$brew_pkg" ]] && OPT_MISSING_BREW+=("$brew_pkg")
+        [[ -n "$pacman_pkg" ]] && OPT_MISSING_PACMAN+=("$pacman_pkg")
+        [[ -n "$apt_pkg" ]] && OPT_MISSING_APT+=("$apt_pkg")
+        OPT_MISSING_NAMES+=("$name")
+        return 1
+    fi
+}
+
+# -----------------------------------------------------------------------------
 # 1. Core Shell & Terminal
+# -----------------------------------------------------------------------------
 check_tool "Core Shell & Terminal" "git" "Git (version control)" "git" "git" "git"
 check_tool "Core Shell & Terminal" "zsh" "Zsh (shell)" "zsh" "zsh" "zsh"
 check_tool "Core Shell & Terminal" "curl" "Curl (transfer utility)" "curl" "curl" "curl"
 check_tool "Core Shell & Terminal" "ghostty" "Ghostty (terminal emulator)" "ghostty" "ghostty" ""
 
+# -----------------------------------------------------------------------------
 # 2. Prompt & Navigation
+# -----------------------------------------------------------------------------
 check_tool "Prompt & Navigation" "starship" "Starship (cross-shell prompt)" "starship" "starship" ""
 check_tool "Prompt & Navigation" "direnv" "Direnv (directory environment)" "direnv" "direnv" "direnv"
 check_tool "Prompt & Navigation" "eza" "Eza (modern replacement for ls)" "eza" "eza" "eza"
 check_tool "Prompt & Navigation" "fzf" "Fzf (fuzzy finder)" "fzf" "fzf" "fzf"
 
+# -----------------------------------------------------------------------------
 # 3. Runtimes & Editors
+# -----------------------------------------------------------------------------
 check_tool "Runtimes & Editors" "fnm" "Fnm (fast Node manager)" "fnm" "fnm" ""
 
 if command -v nvim &>/dev/null; then
@@ -112,7 +161,9 @@ else
     MISSING_NAMES+=("Neovim / Editor")
 fi
 
+# -----------------------------------------------------------------------------
 # 4. Secrets & Vault Management
+# -----------------------------------------------------------------------------
 check_tool "Secrets & Vault Management" "pass" "Pass (password manager)" "pass" "pass" "pass"
 
 if command -v bao &>/dev/null; then
@@ -159,7 +210,9 @@ if [[ "${XDG_CURRENT_DESKTOP:-}" =~ [Kk][Dd][Ee] ]]; then
     fi
 fi
 
+# -----------------------------------------------------------------------------
 # 5. Package Managers
+# -----------------------------------------------------------------------------
 if command -v brew &>/dev/null; then
     add_result "Package Managers" "ok" "Homebrew" "$(command -v brew)"
 elif [ "$OS" = "Darwin" ]; then
@@ -174,6 +227,24 @@ if [ "$OS" = "Linux" ]; then
         add_result "Package Managers" "ok" "Pacman (package manager)" "$(command -v pacman)"
     fi
 fi
+
+# -----------------------------------------------------------------------------
+# 6. Kubernetes & Cloud Tools (Optional)
+# -----------------------------------------------------------------------------
+check_optional_tool "Kubernetes & Cloud Tools (Optional)" "kubectl" "Kubectl (K8s CLI)" "kubectl" "kubectl" "kubectl"
+check_optional_tool "Kubernetes & Cloud Tools (Optional)" "helm" "Helm (K8s package manager)" "helm" "helm" "helm"
+check_optional_tool "Kubernetes & Cloud Tools (Optional)" "kubectx" "Kubectx (context switcher)" "kubectx" "kubectx" "kubectx"
+check_optional_tool "Kubernetes & Cloud Tools (Optional)" "kubens" "Kubens (namespace switcher)" "kubectx" "kubectx" "kubectx"
+check_optional_tool "Kubernetes & Cloud Tools (Optional)" "k9s" "K9s (K8s terminal UI)" "k9s" "k9s" "k9s"
+check_optional_tool "Kubernetes & Cloud Tools (Optional)" "talosctl" "Talosctl (Talos Linux CLI)" "talosctl" "talosctl" "talosctl"
+
+# -----------------------------------------------------------------------------
+# 7. Linters & Manifest Tools (Optional)
+# -----------------------------------------------------------------------------
+check_optional_tool "Linters & Manifest Tools (Optional)" "yamllint" "Yamllint (YAML linter)" "yamllint" "yamllint" "yamllint"
+check_optional_tool "Linters & Manifest Tools (Optional)" "kubeconform" "Kubeconform (K8s manifest validator)" "kubeconform" "kubeconform" "kubeconform"
+check_optional_tool "Linters & Manifest Tools (Optional)" "yq" "Yq (YAML processor)" "yq" "yq" "yq"
+check_optional_tool "Linters & Manifest Tools (Optional)" "jq" "Jq (JSON processor)" "jq" "jq" "jq"
 
 # -----------------------------------------------------------------------------
 # Print Formatted Prerequisites Summary
@@ -195,10 +266,12 @@ for i in "${!RESULTS_NAME[@]}"; do
         LAST_CAT="$cat"
     fi
 
-    if [ "$st" = "ok" ]; then
+    if [ "$st" = "ok" ] || [ "$st" = "opt_ok" ]; then
         printf "    ${GREEN}✅${RESET}  %-36s ${BLUE}%s${RESET}\n" "$nm" "$dt"
     elif [ "$st" = "warn" ]; then
         printf "    ${YELLOW}⚠️${RESET}  %-36s ${YELLOW}%s${RESET}\n" "$nm" "$dt"
+    elif [ "$st" = "opt_missing" ]; then
+        printf "    ${CYAN}○${RESET}   %-36s ${CYAN}%s${RESET}\n" "$nm" "$dt"
     else
         printf "    ${RED}❌${RESET}  %-36s ${RED}%s${RESET}\n" "$nm" "$dt"
     fi
@@ -206,40 +279,81 @@ done
 
 echo -e "\n${BOLD}----------------------------------------------------------------${RESET}"
 
-if [ "$MISSING_COUNT" -eq 0 ]; then
-    echo -e "${GREEN}${BOLD}Status: ${INSTALLED_COUNT}/${TOTAL_CHECKED} recommended packages installed (100% complete) ✅${RESET}\n"
-    exit 0
+if [ "$CORE_MISSING" -eq 0 ]; then
+    echo -e "${GREEN}${BOLD}Core Prerequisites: ${CORE_INSTALLED}/${CORE_TOTAL} installed (100% complete) ✅${RESET}"
+else
+    echo -e "${RED}${BOLD}Core Prerequisites: ${CORE_INSTALLED}/${CORE_TOTAL} installed (${CORE_MISSING} missing) ❌${RESET}"
 fi
 
-echo -e "${YELLOW}${BOLD}Status: ${INSTALLED_COUNT}/${TOTAL_CHECKED} packages installed (${MISSING_COUNT} missing) ⚠️${RESET}\n"
-
-info "Suggested installation command for your platform:"
-
-if [ "$OS" = "Darwin" ] || command -v brew &>/dev/null; then
-    if [ ${#MISSING_BREW[@]} -gt 0 ]; then
-        echo -e "  ${CYAN}${BOLD}brew install ${MISSING_BREW[*]}${RESET}"
-    fi
-elif [ "$OS" = "Linux" ]; then
-    if command -v pacman &>/dev/null; then
-        if command -v paru &>/dev/null; then
-            echo -e "  ${CYAN}${BOLD}paru -S --needed ${MISSING_PACMAN[*]}${RESET}"
-        else
-            echo -e "  ${CYAN}${BOLD}sudo pacman -S --needed ${MISSING_PACMAN[*]}${RESET}"
-        fi
-    elif command -v apt-get &>/dev/null; then
-        if [ ${#MISSING_APT[@]} -gt 0 ]; then
-            echo -e "  ${CYAN}${BOLD}sudo apt update && sudo apt install -y ${MISSING_APT[*]}${RESET}"
-        fi
+if [ "$OPT_TOTAL" -gt 0 ]; then
+    if [ "$OPT_MISSING" -eq 0 ]; then
+        echo -e "${GREEN}${BOLD}Optional Packages:  ${OPT_INSTALLED}/${OPT_TOTAL} installed (100% complete) ✅${RESET}\n"
+    else
+        echo -e "${CYAN}${BOLD}Optional Packages:  ${OPT_INSTALLED}/${OPT_TOTAL} installed (${OPT_MISSING} missing) ℹ️${RESET}\n"
     fi
 fi
 
-# Additional installation pointers
-if ! command -v fnm &>/dev/null && ! command -v brew &>/dev/null; then
-    echo -e "  ${BLUE}↳ Fnm: ${BOLD}curl -fsSL https://fnm.vercel.app/install | bash${RESET}"
-fi
-if ! command -v starship &>/dev/null && ! command -v brew &>/dev/null && ! command -v pacman &>/dev/null; then
-    echo -e "  ${BLUE}↳ Starship: ${BOLD}curl -sS https://starship.rs/install.sh | sh${RESET}"
+# -----------------------------------------------------------------------------
+# Installation Suggestions
+# -----------------------------------------------------------------------------
+
+if [ "$CORE_MISSING" -gt 0 ]; then
+    info "Suggested installation command for missing core prerequisites:"
+
+    if [ "$OS" = "Linux" ]; then
+        if command -v pacman &>/dev/null; then
+            local_pacman="$(dedup "${MISSING_PACMAN[@]}")"
+            if command -v paru &>/dev/null; then
+                [ -n "$local_pacman" ] && echo -e "  ${CYAN}${BOLD}paru -S --needed ${local_pacman}${RESET}"
+            else
+                [ -n "$local_pacman" ] && echo -e "  ${CYAN}${BOLD}sudo pacman -S --needed ${local_pacman}${RESET}"
+            fi
+        elif command -v apt-get &>/dev/null; then
+            local_apt="$(dedup "${MISSING_APT[@]}")"
+            [ -n "$local_apt" ] && echo -e "  ${CYAN}${BOLD}sudo apt update && sudo apt install -y ${local_apt}${RESET}"
+        elif command -v brew &>/dev/null; then
+            local_brew="$(dedup "${MISSING_BREW[@]}")"
+            [ -n "$local_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${local_brew}${RESET}"
+        fi
+    elif [ "$OS" = "Darwin" ]; then
+        local_brew="$(dedup "${MISSING_BREW[@]}")"
+        [ -n "$local_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${local_brew}${RESET}"
+    fi
+
+    # Additional installation pointers
+    if ! command -v fnm &>/dev/null && ! command -v brew &>/dev/null; then
+        echo -e "  ${BLUE}↳ Fnm: ${BOLD}curl -fsSL https://fnm.vercel.app/install | bash${RESET}"
+    fi
+    if ! command -v starship &>/dev/null && ! command -v brew &>/dev/null && ! command -v pacman &>/dev/null; then
+        echo -e "  ${BLUE}↳ Starship: ${BOLD}curl -sS https://starship.rs/install.sh | sh${RESET}"
+    fi
+
+    echo ""
+    exit 1
 fi
 
-echo ""
-exit 1
+if [ "$OPT_MISSING" -gt 0 ]; then
+    info "Optional packages can be installed via:"
+    if [ "$OS" = "Linux" ]; then
+        if command -v pacman &>/dev/null; then
+            opt_pacman="$(dedup "${OPT_MISSING_PACMAN[@]}")"
+            if command -v paru &>/dev/null; then
+                [ -n "$opt_pacman" ] && echo -e "  ${CYAN}${BOLD}paru -S --needed ${opt_pacman}${RESET}"
+            else
+                [ -n "$opt_pacman" ] && echo -e "  ${CYAN}${BOLD}sudo pacman -S --needed ${opt_pacman}${RESET}"
+            fi
+        elif command -v apt-get &>/dev/null; then
+            opt_apt="$(dedup "${OPT_MISSING_APT[@]}")"
+            [ -n "$opt_apt" ] && echo -e "  ${CYAN}${BOLD}sudo apt update && sudo apt install -y ${opt_apt}${RESET}"
+        elif command -v brew &>/dev/null; then
+            opt_brew="$(dedup "${OPT_MISSING_BREW[@]}")"
+            [ -n "$opt_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${opt_brew}${RESET}"
+        fi
+    elif [ "$OS" = "Darwin" ]; then
+        opt_brew="$(dedup "${OPT_MISSING_BREW[@]}")"
+        [ -n "$opt_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${opt_brew}${RESET}"
+    fi
+    echo ""
+fi
+
+exit 0
