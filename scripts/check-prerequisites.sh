@@ -136,6 +136,14 @@ check_optional_tool() {
         bin_path="$(command -v podman-compose)"
         add_result "$category" "opt_ok" "Podman Compose (orchestration)" "$bin_path"
         return 0
+    elif [ "$cmd" = "colima" ] && ([ -d "/Applications/OrbStack.app" ] || command -v orb &>/dev/null); then
+        local bin_path="/Applications/OrbStack.app"
+        command -v orb &>/dev/null && bin_path="$(command -v orb)"
+        add_result "$category" "opt_ok" "OrbStack (container runtime VM)" "$bin_path"
+        return 0
+    elif [ "$cmd" = "colima" ] && [ -d "/Applications/Docker.app" ]; then
+        add_result "$category" "opt_ok" "Docker Desktop (container runtime VM)" "/Applications/Docker.app"
+        return 0
     elif [ "$cmd" = "ghostty" ] && [ -d "/Applications/Ghostty.app" ]; then
         add_result "$category" "opt_ok" "$name" "/Applications/Ghostty.app"
         return 0
@@ -299,6 +307,9 @@ fi
 # -----------------------------------------------------------------------------
 check_optional_tool "Containers & Cloud Tools (Optional)" "docker" "Docker (container engine)" "docker" "docker" "docker.io"
 check_optional_tool "Containers & Cloud Tools (Optional)" "docker-compose" "Docker Compose (orchestration)" "docker-compose" "docker-compose" "docker-compose-v2"
+if [ "$OS" = "Darwin" ]; then
+    check_optional_tool "Containers & Cloud Tools (Optional)" "colima" "Colima (container runtime VM)" "colima" "" ""
+fi
 check_optional_tool "Containers & Cloud Tools (Optional)" "kubectl" "Kubectl (K8s CLI)" "kubectl" "kubectl" "kubectl"
 check_optional_tool "Containers & Cloud Tools (Optional)" "helm" "Helm (K8s package manager)" "helm" "helm" "helm"
 check_optional_tool "Containers & Cloud Tools (Optional)" "kubectx" "Kubectx (context switcher)" "kubectx" "kubectx" "kubectx"
@@ -453,6 +464,10 @@ if [ "$OPT_MISSING" -gt 0 ]; then
     elif [ "$OS" = "Darwin" ]; then
         opt_brew="$(dedup "${OPT_MISSING_BREW[@]}")"
         [ -n "$opt_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${opt_brew}${RESET}"
+        if ! command -v colima &>/dev/null && [ ! -d "/Applications/OrbStack.app" ] && [ ! -d "/Applications/Docker.app" ]; then
+            echo -e "\n  ${BLUE}↳ Colima recommended startup (Apple Silicon vz + Rosetta):${RESET}"
+            echo -e "    ${BOLD}colima start --vm-type=vz --vz-rosetta --cpu 4 --memory 4${RESET}"
+        fi
     fi
     echo ""
 fi

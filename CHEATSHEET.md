@@ -78,6 +78,9 @@ Replace your old command-line habits with these faster, modern alternatives:
 | **`k9s`** | `k9s` | Fullscreen curses-based terminal UI for Kubernetes |
 | **`d`** | `docker` | Docker CLI |
 | **`dc`** | `docker compose` | Docker Compose CLI (Compose V2) |
+| **`colima start`** | `colima` | Start lightweight macOS container VM (`--vm-type=vz --vz-rosetta`) |
+| **`colima stop`** | `colima` | Stop container VM and instantly free memory on macOS |
+| **`colima status`** | `colima` | Check macOS container VM status and resource usage |
 | **`talosctl`** | `talosctl` | Talos Linux management CLI |
 | **`kubeconform`** | `kubeconform` | High-speed Kubernetes manifest validator (offline JSON schema validation) |
 | **`yamllint`** | `yamllint` | YAML linter for syntax and schema verification |
