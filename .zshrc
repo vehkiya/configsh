@@ -243,7 +243,8 @@ if command -v glow &>/dev/null; then
     fi
 
     if [[ -f "$cs_file" ]]; then
-      glow -s dark "$cs_file" "$@"
+      local width="${COLUMNS:-$(tput cols 2>/dev/null || echo 120)}"
+      glow -s dark -w "$width" "$cs_file" "$@"
     else
       echo "Error: CHEATSHEET.md not found (tried ${cs_file})" >&2
       return 1
