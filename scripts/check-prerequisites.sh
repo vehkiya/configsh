@@ -116,6 +116,11 @@ check_optional_tool() {
         bin_path="$(command -v "$cmd")"
         add_result "$category" "opt_ok" "$name" "$bin_path"
         return 0
+    elif [ "$cmd" = "docker" ] && command -v podman &>/dev/null; then
+        local bin_path
+        bin_path="$(command -v podman)"
+        add_result "$category" "opt_ok" "Podman (container engine)" "$bin_path"
+        return 0
     elif [ "$cmd" = "ghostty" ] && [ -d "/Applications/Ghostty.app" ]; then
         add_result "$category" "opt_ok" "$name" "/Applications/Ghostty.app"
         return 0
@@ -275,14 +280,15 @@ if [ "$OS" = "Linux" ]; then
 fi
 
 # -----------------------------------------------------------------------------
-# 6. Kubernetes & Cloud Tools (Optional)
+# 6. Containers & Cloud Tools (Optional)
 # -----------------------------------------------------------------------------
-check_optional_tool "Kubernetes & Cloud Tools (Optional)" "kubectl" "Kubectl (K8s CLI)" "kubectl" "kubectl" "kubectl"
-check_optional_tool "Kubernetes & Cloud Tools (Optional)" "helm" "Helm (K8s package manager)" "helm" "helm" "helm"
-check_optional_tool "Kubernetes & Cloud Tools (Optional)" "kubectx" "Kubectx (context switcher)" "kubectx" "kubectx" "kubectx"
-check_optional_tool "Kubernetes & Cloud Tools (Optional)" "kubens" "Kubens (namespace switcher)" "kubectx" "kubectx" "kubectx"
-check_optional_tool "Kubernetes & Cloud Tools (Optional)" "k9s" "K9s (K8s terminal UI)" "k9s" "k9s" "k9s"
-check_optional_tool "Kubernetes & Cloud Tools (Optional)" "talosctl" "Talosctl (Talos Linux CLI)" "talosctl" "talosctl" "talosctl"
+check_optional_tool "Containers & Cloud Tools (Optional)" "docker" "Docker (container engine)" "docker" "docker" "docker.io"
+check_optional_tool "Containers & Cloud Tools (Optional)" "kubectl" "Kubectl (K8s CLI)" "kubectl" "kubectl" "kubectl"
+check_optional_tool "Containers & Cloud Tools (Optional)" "helm" "Helm (K8s package manager)" "helm" "helm" "helm"
+check_optional_tool "Containers & Cloud Tools (Optional)" "kubectx" "Kubectx (context switcher)" "kubectx" "kubectx" "kubectx"
+check_optional_tool "Containers & Cloud Tools (Optional)" "kubens" "Kubens (namespace switcher)" "kubectx" "kubectx" "kubectx"
+check_optional_tool "Containers & Cloud Tools (Optional)" "k9s" "K9s (K8s terminal UI)" "k9s" "k9s" "k9s"
+check_optional_tool "Containers & Cloud Tools (Optional)" "talosctl" "Talosctl (Talos Linux CLI)" "talosctl" "talosctl" "talosctl"
 
 # -----------------------------------------------------------------------------
 # 7. Linters & Manifest Tools (Optional)
