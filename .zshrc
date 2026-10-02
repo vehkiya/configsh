@@ -225,7 +225,29 @@ fi
 
 # Terminal markdown reader & cheatsheet viewer
 if command -v glow &>/dev/null; then
-  alias cheatsheet="glow -s dark $HOME/projects/configsh/CHEATSHEET.md"
+  cheatsheet() {
+    local zshrc_target="${HOME}/.zshrc"
+    local cs_file="${zshrc_target:A:h}/CHEATSHEET.md"
+    if [[ ! -f "$cs_file" ]]; then
+      for candidate in \
+        "$HOME/projects/configsh/CHEATSHEET.md" \
+        "$HOME/configsh/CHEATSHEET.md" \
+        "$HOME/.config/configsh/CHEATSHEET.md" \
+        "$HOME/.dotfiles/CHEATSHEET.md"; do
+        if [[ -f "$candidate" ]]; then
+          cs_file="$candidate"
+          break
+        fi
+      done
+    fi
+
+    if [[ -f "$cs_file" ]]; then
+      glow -s dark "$cs_file" "$@"
+    else
+      echo "Error: CHEATSHEET.md not found (tried ${cs_file})" >&2
+      return 1
+    fi
+  }
   alias cs="cheatsheet"
 fi
 
