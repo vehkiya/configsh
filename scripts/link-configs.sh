@@ -170,13 +170,55 @@ if [ -d "$HOME/.oh-my-zsh" ]; then
             warn "Failed to clone fzf-tab plugin (check internet connection)"
         fi
     fi
-    if [ ! -d "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" ] && ! [ -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] && ! [ -f "/home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
-        info "Installing zsh-autosuggestions plugin for Oh My Zsh..."
-        git clone --quiet https://github.com/zsh-users/zsh-autosuggestions "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" 2>/dev/null && success "Installed zsh-autosuggestions plugin" || true
+    if [ ! -d "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" ]; then
+        if [ -d "/usr/share/zsh/plugins/zsh-autosuggestions" ]; then
+            info "Linking system zsh-autosuggestions plugin for Oh My Zsh..."
+            ln -sfn "/usr/share/zsh/plugins/zsh-autosuggestions" "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" && success "Linked zsh-autosuggestions plugin"
+        elif [ -f "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+            info "Configuring system zsh-autosuggestions plugin for Oh My Zsh..."
+            mkdir -p "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions"
+            ln -sfn "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh" && success "Linked zsh-autosuggestions plugin"
+        elif [ -f "/opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+            info "Configuring Homebrew zsh-autosuggestions plugin for Oh My Zsh..."
+            mkdir -p "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions"
+            ln -sfn "/opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh" && success "Linked zsh-autosuggestions plugin"
+        elif [ -f "/home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+            info "Configuring Linuxbrew zsh-autosuggestions plugin for Oh My Zsh..."
+            mkdir -p "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions"
+            ln -sfn "/home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh" && success "Linked zsh-autosuggestions plugin"
+        elif [ -f "/usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+            info "Configuring Homebrew zsh-autosuggestions plugin for Oh My Zsh..."
+            mkdir -p "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions"
+            ln -sfn "/usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh" "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions/zsh-autosuggestions.plugin.zsh" && success "Linked zsh-autosuggestions plugin"
+        else
+            info "Installing zsh-autosuggestions plugin for Oh My Zsh..."
+            git clone --quiet https://github.com/zsh-users/zsh-autosuggestions "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" 2>/dev/null && success "Installed zsh-autosuggestions plugin" || true
+        fi
     fi
-    if [ ! -d "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" ] && ! [ -f "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] && ! [ -f "/home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
-        info "Installing zsh-syntax-highlighting plugin for Oh My Zsh..."
-        git clone --quiet https://github.com/zsh-users/zsh-syntax-highlighting.git "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" 2>/dev/null && success "Installed zsh-syntax-highlighting plugin" || true
+    if [ ! -d "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" ]; then
+        if [ -d "/usr/share/zsh/plugins/zsh-syntax-highlighting" ]; then
+            info "Linking system zsh-syntax-highlighting plugin for Oh My Zsh..."
+            ln -sfn "/usr/share/zsh/plugins/zsh-syntax-highlighting" "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" && success "Linked zsh-syntax-highlighting plugin"
+        elif [ -f "/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+            info "Configuring system zsh-syntax-highlighting plugin for Oh My Zsh..."
+            mkdir -p "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting"
+            ln -sfn "/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh" && success "Linked zsh-syntax-highlighting plugin"
+        elif [ -f "/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+            info "Configuring Homebrew zsh-syntax-highlighting plugin for Oh My Zsh..."
+            mkdir -p "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting"
+            ln -sfn "/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh" && success "Linked zsh-syntax-highlighting plugin"
+        elif [ -f "/home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+            info "Configuring Linuxbrew zsh-syntax-highlighting plugin for Oh My Zsh..."
+            mkdir -p "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting"
+            ln -sfn "/home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh" && success "Linked zsh-syntax-highlighting plugin"
+        elif [ -f "/usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+            info "Configuring Homebrew zsh-syntax-highlighting plugin for Oh My Zsh..."
+            mkdir -p "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting"
+            ln -sfn "/usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting/zsh-syntax-highlighting.plugin.zsh" && success "Linked zsh-syntax-highlighting plugin"
+        else
+            info "Installing zsh-syntax-highlighting plugin for Oh My Zsh..."
+            git clone --quiet https://github.com/zsh-users/zsh-syntax-highlighting.git "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" 2>/dev/null && success "Installed zsh-syntax-highlighting plugin" || true
+        fi
     fi
 fi
 
