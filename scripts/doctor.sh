@@ -322,6 +322,16 @@ if [ "$OS" = "Linux" ]; then
             fi
         fi
     fi
+
+    # Linux Docker group check (if Docker is installed)
+    if command -v docker &>/dev/null; then
+        if getent group docker &>/dev/null && id -nG "${USER:-$(whoami)}" 2>/dev/null | grep -qw docker; then
+            pass "Docker: User ${USER:-$(whoami)} is a member of the 'docker' group"
+        else
+            doctor_warn "Docker: User ${USER:-$(whoami)} is not a member of the 'docker' group"
+            echo -e "        ${YELLOW}↳ Post-install: sudo groupadd docker && sudo usermod -aG docker \$USER && newgrp docker${RESET}"
+        fi
+    fi
 fi
 
 # -----------------------------------------------------------------------------

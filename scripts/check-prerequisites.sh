@@ -114,6 +114,11 @@ check_optional_tool() {
     if command -v "$cmd" &>/dev/null; then
         local bin_path
         bin_path="$(command -v "$cmd")"
+        if [ "$cmd" = "docker" ] && [ "$OS" = "Linux" ]; then
+            if ! getent group docker &>/dev/null || ! id -nG "${USER:-$(whoami)}" 2>/dev/null | grep -qw docker; then
+                bin_path="$bin_path (user not in 'docker' group)"
+            fi
+        fi
         add_result "$category" "opt_ok" "$name" "$bin_path"
         return 0
     elif [ "$cmd" = "docker" ] && command -v podman &>/dev/null; then
@@ -427,11 +432,29 @@ if [ "$OPT_MISSING" -gt 0 ]; then
             opt_brew="$(dedup "${OPT_MISSING_BREW[@]}")"
             [ -n "$opt_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${opt_brew}${RESET}"
         fi
+
+        if ! command -v docker &>/dev/null && ! command -v podman &>/dev/null; then
+            echo -e "\n  ${BLUE}↳ Docker post-install steps:${RESET}"
+            echo -e "    ${BOLD}sudo groupadd docker${RESET}"
+            echo -e "    ${BOLD}sudo usermod -aG docker \$USER${RESET}"
+            echo -e "    ${BOLD}newgrp docker${RESET}"
+        fi
     elif [ "$OS" = "Darwin" ]; then
         opt_brew="$(dedup "${OPT_MISSING_BREW[@]}")"
         [ -n "$opt_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${opt_brew}${RESET}"
     fi
     echo ""
+fi
+
+# Remind if Docker is installed on Linux but user is not in 'docker' group
+if [ "$OS" = "Linux" ] && command -v docker &>/dev/null; then
+    if ! getent group docker &>/dev/null || ! id -nG "${USER:-$(whoami)}" 2>/dev/null | grep -qw docker; then
+        warn "Docker is installed, but user '${USER:-$(whoami)}' is not in the 'docker' group."
+        echo -e "  ${BLUE}↳ Run post-install steps to use Docker without sudo:${RESET}"
+        echo -e "    ${BOLD}sudo groupadd docker${RESET}"
+        echo -e "    ${BOLD}sudo usermod -aG docker \$USER${RESET}"
+        echo -e "    ${BOLD}newgrp docker${RESET}\n"
+    fi
 fi
 
 exit 0
