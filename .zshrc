@@ -224,8 +224,9 @@ if command -v rg &>/dev/null && command -v fzf &>/dev/null; then
 fi
 
 # Terminal markdown reader & cheatsheet viewer
+unalias cheatsheet 2>/dev/null || true
 if command -v glow &>/dev/null; then
-  cheatsheet() {
+  function cheatsheet {
     local zshrc_target="${HOME}/.zshrc"
     local cs_file="${zshrc_target:A:h}/CHEATSHEET.md"
     if [[ ! -f "$cs_file" ]]; then
