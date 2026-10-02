@@ -21,7 +21,7 @@ Replace your old command-line habits with these faster, modern alternatives:
 | Pressing <kbd>↑</kbd> repeatedly for history | <kbd>Ctrl</kbd> + <kbd>R</kbd> | Interactive fuzzy history search with instant filtering. |
 | `kubectl ...` | **`k`** | Short alias (`k get pods`). |
 | Switching K8s context / namespace | **`kx`** / **`kn`** | Interactive context and namespace switchers. |
-| `docker` / `docker-compose` | **`d`** / **`dc`** | Muscle-memory short aliases. |
+| `docker` / `docker compose` | **`d`** / **`dc`** | Muscle-memory short aliases. |
 | `pass show ...` | **`p`** | Fast secret lookup (`p github/token`). |
 | Remembering SSH hostnames / IPs | **`sshx`** *(or `fssh`)* | Interactive TUI SSH connection manager. Browse, fuzzy-search, add (<kbd>a</kbd>), delete (<kbd>d</kbd>), or connect (<kbd>Enter</kbd>). |
 | Always typing `ssh user@host...` | **`sshx add`** | Interactive Huh wizard to configure and save SSH hosts to `~/.ssh/config`. Supports key/password auth, key generation, and `ssh-copy-id`. |
@@ -77,7 +77,7 @@ Replace your old command-line habits with these faster, modern alternatives:
 | **`kn`** | `kubens` | Interactive Kubernetes namespace switcher |
 | **`k9s`** | `k9s` | Fullscreen curses-based terminal UI for Kubernetes |
 | **`d`** | `docker` | Docker CLI |
-| **`dc`** | `docker-compose` | Docker Compose CLI |
+| **`dc`** | `docker compose` | Docker Compose CLI (Compose V2) |
 | **`talosctl`** | `talosctl` | Talos Linux management CLI |
 | **`kubeconform`** | `kubeconform` | High-speed Kubernetes manifest validator (offline JSON schema validation) |
 | **`yamllint`** | `yamllint` | YAML linter for syntax and schema verification |

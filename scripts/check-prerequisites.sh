@@ -111,7 +111,12 @@ check_optional_tool() {
     local pacman_pkg="$5"
     local apt_pkg="$6"
 
-    if command -v "$cmd" &>/dev/null; then
+    if [ "$cmd" = "docker-compose" ] && command -v docker &>/dev/null && docker compose version &>/dev/null; then
+        local bin_path
+        bin_path="$(command -v docker) compose"
+        add_result "$category" "opt_ok" "$name" "$bin_path"
+        return 0
+    elif command -v "$cmd" &>/dev/null; then
         local bin_path
         bin_path="$(command -v "$cmd")"
         if [ "$cmd" = "docker" ] && [ "$OS" = "Linux" ]; then
@@ -125,6 +130,11 @@ check_optional_tool() {
         local bin_path
         bin_path="$(command -v podman)"
         add_result "$category" "opt_ok" "Podman (container engine)" "$bin_path"
+        return 0
+    elif [ "$cmd" = "docker-compose" ] && command -v podman-compose &>/dev/null; then
+        local bin_path
+        bin_path="$(command -v podman-compose)"
+        add_result "$category" "opt_ok" "Podman Compose (orchestration)" "$bin_path"
         return 0
     elif [ "$cmd" = "ghostty" ] && [ -d "/Applications/Ghostty.app" ]; then
         add_result "$category" "opt_ok" "$name" "/Applications/Ghostty.app"
@@ -288,6 +298,7 @@ fi
 # 6. Containers & Cloud Tools (Optional)
 # -----------------------------------------------------------------------------
 check_optional_tool "Containers & Cloud Tools (Optional)" "docker" "Docker (container engine)" "docker" "docker" "docker.io"
+check_optional_tool "Containers & Cloud Tools (Optional)" "docker-compose" "Docker Compose (orchestration)" "docker-compose" "docker-compose" "docker-compose-v2"
 check_optional_tool "Containers & Cloud Tools (Optional)" "kubectl" "Kubectl (K8s CLI)" "kubectl" "kubectl" "kubectl"
 check_optional_tool "Containers & Cloud Tools (Optional)" "helm" "Helm (K8s package manager)" "helm" "helm" "helm"
 check_optional_tool "Containers & Cloud Tools (Optional)" "kubectx" "Kubectx (context switcher)" "kubectx" "kubectx" "kubectx"
