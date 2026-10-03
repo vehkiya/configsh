@@ -58,10 +58,12 @@ fi
 
 # Language environment (preserve existing valid UTF-8 locale; fallback gracefully if ungenerated)
 if [[ -z "$LANG" || "$LANG" == "C" || "$LANG" == "POSIX" ]]; then
-  if locale -a 2>/dev/null | grep -qi '^en_US\.utf8$'; then
+  if locale -a 2>/dev/null | grep -qEi '^en_US\.utf-?8$'; then
     export LANG="en_US.UTF-8"
-  elif locale -a 2>/dev/null | grep -qi '^C\.utf8$'; then
+  elif locale -a 2>/dev/null | grep -qEi '^C\.utf-?8$'; then
     export LANG="C.UTF-8"
+  elif [[ "$(uname)" == "Darwin" ]]; then
+    export LANG="en_US.UTF-8"
   else
     export LANG="C.UTF-8"
   fi
@@ -144,8 +146,9 @@ fi
 # Tool initializations (graceful execution if installed)
 command -v fnm &>/dev/null && eval "$(fnm env --use-on-cd 2>/dev/null || fnm env)"
 if command -v fzf &>/dev/null; then
-  if fzf --zsh &>/dev/null; then
-    eval "$(fzf --zsh)"
+  if _fzf_init="$(fzf --zsh 2>/dev/null)"; then
+    eval "$_fzf_init"
+    unset _fzf_init
   else
     for _fzf_comp in \
       "/usr/share/doc/fzf/examples/completion.zsh" \

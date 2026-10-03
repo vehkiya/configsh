@@ -176,7 +176,11 @@ else
 fi
 
 CUSTOM_PLUGINS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
-if [ -d "$CUSTOM_PLUGINS_DIR/fzf-tab" ] || [ -f "/usr/share/zsh/plugins/fzf-tab/fzf-tab.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/fzf-tab/fzf-tab.zsh" ] || [ -f "/opt/homebrew/share/fzf-tab/fzf-tab.zsh" ]; then
+if [ -d "$CUSTOM_PLUGINS_DIR/fzf-tab" ] || \
+   [ -f "/usr/share/zsh/plugins/fzf-tab/fzf-tab.zsh" ] || \
+   [ -f "/home/linuxbrew/.linuxbrew/share/fzf-tab/fzf-tab.zsh" ] || \
+   [ -f "/opt/homebrew/share/fzf-tab/fzf-tab.zsh" ] || \
+   [ -f "/usr/local/share/fzf-tab/fzf-tab.zsh" ]; then
     add_result "Core Shell & Terminal" "ok" "Plugin: fzf-tab" "Installed"
 else
     add_result "Core Shell & Terminal" "missing" "Plugin: fzf-tab" "Not installed"

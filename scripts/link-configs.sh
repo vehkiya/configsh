@@ -162,6 +162,15 @@ link_file "$DOTFILES_DIR/scripts/pinentry-wrapper.sh" "$HOME/.local/bin/pinentry
 if [ -d "$HOME/.oh-my-zsh" ]; then
     CUSTOM_PLUGINS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
     mkdir -p "$CUSTOM_PLUGINS_DIR"
+
+    # Remove dangling plugin symlinks if previously pointed to removed paths
+    for _dead_plugin in fzf-tab zsh-autosuggestions zsh-syntax-highlighting; do
+        if [ -L "$CUSTOM_PLUGINS_DIR/$_dead_plugin" ] && [ ! -e "$CUSTOM_PLUGINS_DIR/$_dead_plugin" ]; then
+            rm -f "$CUSTOM_PLUGINS_DIR/$_dead_plugin"
+        fi
+    done
+    unset _dead_plugin
+
     if [ ! -d "$CUSTOM_PLUGINS_DIR/fzf-tab" ]; then
         info "Installing fzf-tab plugin for Oh My Zsh..."
         if git clone --quiet https://github.com/Aloxaf/fzf-tab "$CUSTOM_PLUGINS_DIR/fzf-tab" 2>/dev/null; then
