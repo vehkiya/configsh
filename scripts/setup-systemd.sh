@@ -22,8 +22,11 @@ Type=notify
 EOF
         success "Applied Ghostty systemd override (Type=notify in $GHOSTTY_OVERRIDE_FILE)"
         if command -v systemctl &>/dev/null; then
-            systemctl --user daemon-reload 2>/dev/null || true
-            success "Reloaded systemd user daemon"
+            if systemctl --user daemon-reload 2>/dev/null; then
+                success "Reloaded systemd user daemon"
+            else
+                warn "Could not reload the systemd user daemon; the override applies after the next login"
+            fi
         fi
     else
         success "Ghostty not installed or systemd service not present; skipping override."

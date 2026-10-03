@@ -75,8 +75,9 @@ use_pass ANTHROPIC_API_KEY dev/anthropic/api_key
 use_pass CLOUDFLARE_API_TOKEN cloudflare/tokens/deploy
 
 # 2. Pull from centralized OpenBao / Vault instance
-use_vault DATABASE_URL secret/data/projects/my-app db_url
-use_vault REDIS_PASSWORD secret/data/projects/my-app redis_auth
+#    (KV v2: use the logical path; `kv get` adds the /data/ segment itself)
+use_vault DATABASE_URL secret/projects/my-app db_url
+use_vault REDIS_PASSWORD secret/projects/my-app redis_auth
 ```
 
 Then run `direnv allow`. Direnv will load the secrets into memory only when entering the project directory, and unload them when exiting.
@@ -146,5 +147,5 @@ export VAULT_ADDR="https://vault.internal.net:8200"
 export WORK_VPN_ENDPOINT="vpn.example.com"
 ```
 
-This file is automatically loaded at the end of `.zshrc` and is excluded from Git tracking via `.gitignore`.
+This file is loaded near the end of `.zshrc`, after PATH and tool setup but before the zoxide, `y`, `fif`, `cs` and fzf-tab definitions (so it can add to PATH and set `ZOXIDE_REPLACE_CD`), and is excluded from Git tracking via `.gitignore`.
 

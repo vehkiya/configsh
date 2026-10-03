@@ -11,24 +11,25 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 info "4. Auditing SSH private keys for passphrase protection..."
 
+KEY_COUNT=0
 UNENCRYPTED_COUNT=0
-if [ -d "$HOME/.ssh" ]; then
-    while IFS= read -r key; do
-        if [ -f "$key" ]; then
-            # Test if the key can be read without a passphrase
-            if ssh-keygen -y -P "" -f "$key" >/dev/null 2>&1; then
-                alert "UNENCRYPTED KEY DETECTED: $key"
-                echo -e "    ${YELLOW}↳ Add a passphrase: ${BOLD}ssh-keygen -p -f $key${RESET}"
-                UNENCRYPTED_COUNT=$((UNENCRYPTED_COUNT + 1))
-            else
-                success "Encrypted with passphrase: $(basename "$key")"
-            fi
-        fi
-    done < <(find "$HOME/.ssh" -maxdepth 1 -type f ! -name "*.pub" ! -name "known_hosts*" ! -name "authorized_keys*" ! -name "allowed_signers*" ! -name "config" 2>/dev/null || true)
-fi
+while IFS= read -r key; do
+    KEY_COUNT=$((KEY_COUNT + 1))
+    case "$(ssh_key_protection "$key")" in
+        encrypted) success "Encrypted with passphrase: $(basename "$key")" ;;
+        fido)      success "Hardware-backed FIDO key: $(basename "$key")" ;;
+        *)
+            alert "UNENCRYPTED KEY DETECTED: $key"
+            echo -e "    ${YELLOW}↳ Add a passphrase: ${BOLD}ssh-keygen -p -f $key${RESET}"
+            UNENCRYPTED_COUNT=$((UNENCRYPTED_COUNT + 1))
+            ;;
+    esac
+done < <(ssh_private_keys)
 
-if [ "$UNENCRYPTED_COUNT" -eq 0 ]; then
-    success "All detected SSH private keys are passphrase-protected."
+if [ "$KEY_COUNT" -eq 0 ]; then
+    success "No SSH private keys found in ~/.ssh."
+elif [ "$UNENCRYPTED_COUNT" -eq 0 ]; then
+    success "No unencrypted SSH private keys found."
 else
     warn "$UNENCRYPTED_COUNT SSH key(s) on disk have empty passphrases. Encrypt them to prevent offline exfiltration."
 fi

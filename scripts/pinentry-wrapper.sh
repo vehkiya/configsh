@@ -5,25 +5,29 @@
 #           GNOME Keyring via pinentry-gnome3, or terminal curses fallback)
 # =============================================================================
 
-# 1. Graphical Environment (Wayland / X11 / macOS Quartz)
-if [ -n "${WAYLAND_DISPLAY:-}" ] || [ -n "${DISPLAY:-}" ]; then
-    if [ "$(uname)" = "Darwin" ]; then
-        if [ -x "/opt/homebrew/bin/pinentry-mac" ]; then
-            exec /opt/homebrew/bin/pinentry-mac "$@"
-        elif [ -x "/usr/local/bin/pinentry-mac" ]; then
-            exec /usr/local/bin/pinentry-mac "$@"
-        fi
-    else
-        # Prefer KDE pinentry-qt under KDE/Plasma
-        if [[ "${XDG_CURRENT_DESKTOP:-}" =~ [Kk][Dd][Ee] ]] && command -v pinentry-qt &>/dev/null; then
-            exec "$(command -v pinentry-qt)" "$@"
-        elif command -v pinentry-gnome3 &>/dev/null; then
-            exec "$(command -v pinentry-gnome3)" "$@"
-        elif command -v pinentry-qt &>/dev/null; then
-            exec "$(command -v pinentry-qt)" "$@"
-        elif command -v pinentry-gtk-2 &>/dev/null; then
-            exec "$(command -v pinentry-gtk-2)" "$@"
-        fi
+# 1. Graphical Environment (macOS Quartz / Wayland / X11)
+# PINENTRY_USER_DATA=USE_TTY (exported by .zshrc in SSH sessions; gpg-agent
+# forwards it here, unlike SSH_CONNECTION) skips GUI prompts that would appear
+# on the remote machine's desktop.
+# macOS sets neither DISPLAY nor WAYLAND_DISPLAY, so it's checked on its own.
+if [ "${PINENTRY_USER_DATA:-}" = "USE_TTY" ]; then
+    :
+elif [ "$(uname)" = "Darwin" ]; then
+    if [ -x "/opt/homebrew/bin/pinentry-mac" ]; then
+        exec /opt/homebrew/bin/pinentry-mac "$@"
+    elif [ -x "/usr/local/bin/pinentry-mac" ]; then
+        exec /usr/local/bin/pinentry-mac "$@"
+    fi
+elif [ -n "${WAYLAND_DISPLAY:-}" ] || [ -n "${DISPLAY:-}" ]; then
+    # Prefer KDE pinentry-qt under KDE/Plasma
+    if [[ "${XDG_CURRENT_DESKTOP:-}" =~ [Kk][Dd][Ee] ]] && command -v pinentry-qt &>/dev/null; then
+        exec "$(command -v pinentry-qt)" "$@"
+    elif command -v pinentry-gnome3 &>/dev/null; then
+        exec "$(command -v pinentry-gnome3)" "$@"
+    elif command -v pinentry-qt &>/dev/null; then
+        exec "$(command -v pinentry-qt)" "$@"
+    elif command -v pinentry-gtk-2 &>/dev/null; then
+        exec "$(command -v pinentry-gtk-2)" "$@"
     fi
 fi
 
