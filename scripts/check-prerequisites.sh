@@ -257,16 +257,16 @@ fi
 # -----------------------------------------------------------------------------
 check_tool "Secrets & Vault Management" "pass" "Pass (password manager)" "pass" "pass" "pass"
 
+VAULT_CLI_MISSING=false
 if command -v bao &>/dev/null; then
     add_result "Secrets & Vault Management" "ok" "Vault CLI: OpenBao" "$(command -v bao)"
 elif command -v vault &>/dev/null; then
     add_result "Secrets & Vault Management" "ok" "Vault CLI: HashiCorp Vault" "$(command -v vault)"
 else
     add_result "Secrets & Vault Management" "missing" "Vault CLI (vault or bao)" "Not installed"
-    # Homebrew dropped 'vault' after the BSL relicense; neither CLI is in the
-    # default apt archives (see the pointer printed below)
-    MISSING_BREW+=("openbao")
-    MISSING_PACMAN+=("vault")
+    # Either CLI works, so both are suggested separately below rather than
+    # picking one for the combined install command
+    VAULT_CLI_MISSING=true
     MISSING_NAMES+=("Vault CLI (HashiCorp Vault or OpenBao)")
 fi
 
@@ -458,8 +458,20 @@ if [ "$CORE_MISSING" -gt 0 ]; then
     if ! command -v starship &>/dev/null && ! command -v brew &>/dev/null && ! command -v pacman &>/dev/null; then
         echo -e "  ${BLUE}↳ Starship: ${BOLD}curl -sS https://starship.rs/install.sh | sh${RESET}"
     fi
-    if command -v apt-get &>/dev/null && ! command -v brew &>/dev/null && ! command -v bao &>/dev/null && ! command -v vault &>/dev/null; then
-        echo -e "  ${BLUE}↳ Vault CLI: ${BOLD}not in the default apt archives; install OpenBao (https://openbao.org/downloads) or HashiCorp's apt repo${RESET}"
+    # Same package manager precedence as the install command above
+    if [ "$VAULT_CLI_MISSING" = true ]; then
+        echo -e "  ${BLUE}↳ Vault CLI (OpenBao or HashiCorp Vault, either works):${RESET}"
+        if [ "$OS" = "Linux" ] && command -v pacman &>/dev/null; then
+            pacman_cmd="sudo pacman -S --needed"
+            if command -v paru &>/dev/null; then
+                pacman_cmd="paru -S --needed"
+            fi
+            echo -e "    ${BOLD}${pacman_cmd} openbao${RESET}  or  ${BOLD}${pacman_cmd} vault${RESET}"
+        elif [ "$OS" = "Linux" ] && command -v apt-get &>/dev/null; then
+            echo -e "    Not in the default apt archives: ${BOLD}https://openbao.org/downloads${RESET}  or HashiCorp's apt repo: ${BOLD}https://developer.hashicorp.com/vault/install${RESET}"
+        elif [ "$OS" = "Darwin" ] || command -v brew &>/dev/null; then
+            echo -e "    ${BOLD}brew install openbao${RESET}  or  ${BOLD}brew tap hashicorp/tap && brew install hashicorp/tap/vault${RESET}"
+        fi
     fi
 
     echo ""
