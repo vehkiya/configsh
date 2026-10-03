@@ -23,7 +23,8 @@ use_pass() {
 }
 
 # Load a secret from an OpenBao or HashiCorp Vault instance into an environment variable
-# Usage in .envrc: use_vault DATABASE_URL secret/data/my-app db_url
+# Usage in .envrc: use_vault DATABASE_URL secret/my-app db_url
+# (KV v2 paths are logical: `kv get` adds the /data/ segment itself)
 use_vault() {
   local var_name="$1"
   local secret_path="$2"

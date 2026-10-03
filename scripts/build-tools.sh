@@ -22,13 +22,23 @@ rm -f "$BIN_DIR/ssh-add-host" "$BIN_DIR/add-ssh-host" "$BIN_DIR/fssh-add" 2>/dev
 
 # -----------------------------------------------------------------------------
 # 1. Install sshx (https://github.com/vehkiya/sshx)
-# Prefers go install, falls back to precompiled GitHub Release binary
+# Prefers go install, falls back to precompiled GitHub Release binary.
+# Set SSHX_VERSION (e.g. v0.5.0) to pin a release instead of tracking latest.
 # -----------------------------------------------------------------------------
+SSHX_VERSION="${SSHX_VERSION:-latest}"
 installed=false
 
+sha256_of() {
+    if command -v sha256sum &>/dev/null; then
+        sha256sum "$1" | awk '{print $1}'
+    else
+        shasum -a 256 "$1" | awk '{print $1}'
+    fi
+}
+
 if command -v go &>/dev/null; then
-    info "Installing sshx via go install github.com/vehkiya/sshx@latest..."
-    if GOBIN="$BIN_DIR" CGO_ENABLED=0 go install -trimpath -ldflags="-s -w" github.com/vehkiya/sshx@latest 2>/dev/null; then
+    info "Installing sshx via go install github.com/vehkiya/sshx@${SSHX_VERSION}..."
+    if GOBIN="$BIN_DIR" CGO_ENABLED=0 go install -trimpath -ldflags="-s -w" "github.com/vehkiya/sshx@${SSHX_VERSION}"; then
         chmod 755 "$BIN_DIR/sshx"
         success "Installed sshx (via go install)"
         installed=true
@@ -39,22 +49,40 @@ fi
 
 if [ "$installed" = false ]; then
     info "Downloading prebuilt sshx binary from GitHub Releases..."
-    OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
-    ARCH="$(uname -m)"
-    case "$ARCH" in
-        x86_64) ARCH="amd64" ;;
-        aarch64|arm64) ARCH="arm64" ;;
+    SSHX_OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+    SSHX_ARCH="$(uname -m)"
+    case "$SSHX_ARCH" in
+        x86_64) SSHX_ARCH="amd64" ;;
+        aarch64|arm64) SSHX_ARCH="arm64" ;;
     esac
-    TAR_URL="https://github.com/vehkiya/sshx/releases/latest/download/sshx_${OS}_${ARCH}.tar.gz"
-    if curl -sSLf "$TAR_URL" -o /tmp/sshx.tar.gz 2>/dev/null; then
-        tar -xzf /tmp/sshx.tar.gz -C /tmp/
-        mv /tmp/sshx "$BIN_DIR/sshx"
-        chmod 755 "$BIN_DIR/sshx"
-        rm -f /tmp/sshx.tar.gz
-        success "Installed sshx (from GitHub Releases)"
+    if [ "$SSHX_VERSION" = "latest" ]; then
+        RELEASE_URL="https://github.com/vehkiya/sshx/releases/latest/download"
+    else
+        RELEASE_URL="https://github.com/vehkiya/sshx/releases/download/${SSHX_VERSION}"
+    fi
+    TARBALL="sshx_${SSHX_OS}_${SSHX_ARCH}.tar.gz"
+
+    # Private temp dir (not fixed /tmp paths), cleaned up by the subshell's trap.
+    # Every step checks its own status: set -e doesn't apply inside an if condition.
+    if (
+        tmp="$(mktemp -d)" || exit 1
+        trap 'rm -rf "$tmp"' EXIT
+        curl -sSLf "$RELEASE_URL/$TARBALL" -o "$tmp/$TARBALL" || exit 1
+        curl -sSLf "$RELEASE_URL/checksums.txt" -o "$tmp/checksums.txt" || exit 1
+        expected="$(awk -v f="$TARBALL" '$2 == f { print $1 }' "$tmp/checksums.txt")"
+        if [ -z "$expected" ] || [ "$expected" != "$(sha256_of "$tmp/$TARBALL")" ]; then
+            alert "Checksum verification failed for $TARBALL"
+            exit 1
+        fi
+        tar -xzf "$tmp/$TARBALL" -C "$tmp" || exit 1
+        bin="$(find "$tmp" -type f -name sshx | head -n 1)"
+        [ -n "$bin" ] || exit 1
+        mv "$bin" "$BIN_DIR/sshx" && chmod 755 "$BIN_DIR/sshx"
+    ); then
+        success "Installed sshx (from GitHub Releases, checksum verified)"
         installed=true
     else
-        warn "Could not download prebuilt sshx release. Install Go or download manually from https://github.com/vehkiya/sshx/releases"
+        warn "Could not install prebuilt sshx release. Install Go or download manually from https://github.com/vehkiya/sshx/releases"
     fi
 fi
 

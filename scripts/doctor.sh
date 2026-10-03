@@ -145,41 +145,17 @@ else
     echo -e "        ${YELLOW}↳ Remediation: sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\" \"\" --unattended --keep-zshrc${RESET}"
 fi
 
+# Oh My Zsh only loads plugins from $ZSH_CUSTOM/plugins or its own plugins/
+# dir, so check there (./setup.sh links system packages into $ZSH_CUSTOM)
 CUSTOM_PLUGINS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
-if [ -d "$CUSTOM_PLUGINS_DIR/fzf-tab" ] || \
-   [ -f "/usr/share/zsh/plugins/fzf-tab/fzf-tab.zsh" ] || \
-   [ -f "/home/linuxbrew/.linuxbrew/share/fzf-tab/fzf-tab.zsh" ] || \
-   [ -f "/opt/homebrew/share/fzf-tab/fzf-tab.zsh" ] || \
-   [ -f "/usr/local/share/fzf-tab/fzf-tab.zsh" ]; then
-    pass "Plugin: fzf-tab installed"
-else
-    fail "Plugin: fzf-tab missing"
-    echo -e "        ${YELLOW}↳ Remediation: git clone https://github.com/Aloxaf/fzf-tab \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/fzf-tab${RESET}"
-fi
-
-if [ -d "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" ] || \
-   [ -f "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || \
-   [ -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || \
-   [ -f "/home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || \
-   [ -f "/opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || \
-   [ -f "/usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
-    pass "Plugin: zsh-autosuggestions installed"
-else
-    fail "Plugin: zsh-autosuggestions missing"
-    echo -e "        ${YELLOW}↳ Remediation: git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions${RESET}"
-fi
-
-if [ -d "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" ] || \
-   [ -f "/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || \
-   [ -f "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || \
-   [ -f "/home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || \
-   [ -f "/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || \
-   [ -f "/usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
-    pass "Plugin: zsh-syntax-highlighting installed"
-else
-    fail "Plugin: zsh-syntax-highlighting missing"
-    echo -e "        ${YELLOW}↳ Remediation: git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting${RESET}"
-fi
+for plugin in fzf-tab zsh-autosuggestions zsh-syntax-highlighting; do
+    if [ -f "$CUSTOM_PLUGINS_DIR/$plugin/$plugin.plugin.zsh" ] || [ -f "$HOME/.oh-my-zsh/plugins/$plugin/$plugin.plugin.zsh" ]; then
+        pass "Plugin: $plugin installed"
+    else
+        fail "Plugin: $plugin not loadable by Oh My Zsh ($CUSTOM_PLUGINS_DIR/$plugin missing or broken)"
+        echo -e "        ${YELLOW}↳ Remediation: run ./setup.sh (links the system package or clones the plugin)${RESET}"
+    fi
+done
 
 # -----------------------------------------------------------------------------
 # 4. Security & Permission Hardening Check
@@ -248,19 +224,17 @@ done
 header "[ 5. Cryptography & SSH Keys at Rest ]"
 
 KEY_COUNT=0
-if [ -d "$HOME/.ssh" ]; then
-    while IFS= read -r key; do
-        if [ -f "$key" ]; then
-            KEY_COUNT=$((KEY_COUNT + 1))
-            if ssh-keygen -y -P "" -f "$key" >/dev/null 2>&1; then
-                fail "UNENCRYPTED KEY DETECTED: $key"
-                echo -e "        ${YELLOW}↳ Remediation: ssh-keygen -p -f $key${RESET}"
-            else
-                pass "$(basename "$key") (passphrase protected)"
-            fi
-        fi
-    done < <(find "$HOME/.ssh" -maxdepth 1 -type f ! -name "*.pub" ! -name "known_hosts*" ! -name "authorized_keys*" ! -name "allowed_signers*" ! -name "config" 2>/dev/null || true)
-fi
+while IFS= read -r key; do
+    KEY_COUNT=$((KEY_COUNT + 1))
+    case "$(ssh_key_protection "$key")" in
+        encrypted) pass "$(basename "$key") (passphrase protected)" ;;
+        fido)      pass "$(basename "$key") (hardware-backed FIDO key)" ;;
+        *)
+            fail "UNENCRYPTED KEY DETECTED: $key"
+            echo -e "        ${YELLOW}↳ Remediation: ssh-keygen -p -f $key${RESET}"
+            ;;
+    esac
+done < <(ssh_private_keys)
 
 if [ "$KEY_COUNT" -eq 0 ]; then
     doctor_info "No SSH private keys found in ~/.ssh"
@@ -305,10 +279,8 @@ else
 fi
 
 if command -v ssh-add &>/dev/null; then
-    set +e
-    ssh_out="$(ssh-add -l 2>&1)"
-    ssh_code=$?
-    set -e
+    ssh_code=0
+    ssh_out="$(ssh-add -l 2>&1)" || ssh_code=$?
     if [ "$ssh_code" -eq 0 ] || [ "$ssh_code" -eq 1 ]; then
         pass "SSH Agent Communication: Healthy ($ssh_out)"
     else
@@ -317,10 +289,13 @@ if command -v ssh-add &>/dev/null; then
 fi
 
 if [ -f "$HOME/.ssh/config" ]; then
-    if grep -q "AddKeysToAgent" "$HOME/.ssh/config" 2>/dev/null; then
-        pass "~/.ssh/config: 'AddKeysToAgent yes' configured"
-    else
+    add_keys="$(grep -Ei '^[[:space:]]*AddKeysToAgent[[:space:]]' "$HOME/.ssh/config" 2>/dev/null | head -n 1 | awk '{print tolower($2)}' || true)"
+    if [ -z "$add_keys" ]; then
         fail "~/.ssh/config: 'AddKeysToAgent yes' missing"
+    elif [ "$add_keys" = "no" ]; then
+        doctor_warn "~/.ssh/config: AddKeysToAgent is set to 'no' (unlocked keys won't be cached)"
+    else
+        pass "~/.ssh/config: 'AddKeysToAgent $add_keys' configured"
     fi
 fi
 

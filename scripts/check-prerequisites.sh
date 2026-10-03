@@ -30,6 +30,9 @@ OPT_MISSING_BREW=()
 OPT_MISSING_PACMAN=()
 OPT_MISSING_APT=()
 OPT_MISSING_NAMES=()
+# Missing optional tools without a package in the default Debian/Ubuntu
+# archives (one unknown name makes apt reject the whole install command)
+OPT_MISSING_NO_APT=()
 
 RESULTS_CATEGORY=()
 RESULTS_STATUS=()
@@ -155,6 +158,7 @@ check_optional_tool() {
         [[ -n "$brew_pkg" ]] && OPT_MISSING_BREW+=("$brew_pkg")
         [[ -n "$pacman_pkg" ]] && OPT_MISSING_PACMAN+=("$pacman_pkg")
         [[ -n "$apt_pkg" ]] && OPT_MISSING_APT+=("$apt_pkg")
+        [[ -z "$apt_pkg" ]] && OPT_MISSING_NO_APT+=("$cmd")
         OPT_MISSING_NAMES+=("$name")
         return 1
     fi
@@ -183,10 +187,9 @@ if [ -d "$CUSTOM_PLUGINS_DIR/fzf-tab" ] || \
    [ -f "/usr/local/share/fzf-tab/fzf-tab.zsh" ]; then
     add_result "Core Shell & Terminal" "ok" "Plugin: fzf-tab" "Installed"
 else
-    add_result "Core Shell & Terminal" "missing" "Plugin: fzf-tab" "Not installed"
-    MISSING_BREW+=("fzf-tab")
-    MISSING_PACMAN+=("zsh-fzf-tab-git")
-    MISSING_APT+=("")
+    # No package suggestion: ./setup.sh clones fzf-tab into $ZSH_CUSTOM itself
+    # (Oh My Zsh doesn't load packaged copies, and Arch's is AUR-only)
+    add_result "Core Shell & Terminal" "missing" "Plugin: fzf-tab" "Not installed (./setup.sh clones it)"
     MISSING_NAMES+=("fzf-tab plugin")
 fi
 
@@ -260,9 +263,10 @@ elif command -v vault &>/dev/null; then
     add_result "Secrets & Vault Management" "ok" "Vault CLI: HashiCorp Vault" "$(command -v vault)"
 else
     add_result "Secrets & Vault Management" "missing" "Vault CLI (vault or bao)" "Not installed"
-    MISSING_BREW+=("vault")
+    # Homebrew dropped 'vault' after the BSL relicense; neither CLI is in the
+    # default apt archives (see the pointer printed below)
+    MISSING_BREW+=("openbao")
     MISSING_PACMAN+=("vault")
-    MISSING_APT+=("vault")
     MISSING_NAMES+=("Vault CLI (HashiCorp Vault or OpenBao)")
 fi
 
@@ -320,22 +324,23 @@ fi
 # 6. Containers & Cloud Tools (Optional)
 # -----------------------------------------------------------------------------
 check_optional_tool "Containers & Cloud Tools (Optional)" "docker" "Docker (container engine)" "docker" "docker" "docker.io"
-check_optional_tool "Containers & Cloud Tools (Optional)" "docker-compose" "Docker Compose (orchestration)" "docker-compose" "docker-compose" "docker-compose-v2"
+# apt names are left empty where Debian trixie or Ubuntu noble lacks the package
+check_optional_tool "Containers & Cloud Tools (Optional)" "docker-compose" "Docker Compose (orchestration)" "docker-compose" "docker-compose" ""
 if [ "$OS" = "Darwin" ]; then
     check_optional_tool "Containers & Cloud Tools (Optional)" "colima" "Colima (container runtime VM)" "colima" "" ""
 fi
-check_optional_tool "Containers & Cloud Tools (Optional)" "kubectl" "Kubectl (K8s CLI)" "kubectl" "kubectl" "kubectl"
-check_optional_tool "Containers & Cloud Tools (Optional)" "helm" "Helm (K8s package manager)" "helm" "helm" "helm"
+check_optional_tool "Containers & Cloud Tools (Optional)" "kubectl" "Kubectl (K8s CLI)" "kubectl" "kubectl" ""
+check_optional_tool "Containers & Cloud Tools (Optional)" "helm" "Helm (K8s package manager)" "helm" "helm" ""
 check_optional_tool "Containers & Cloud Tools (Optional)" "kubectx" "Kubectx (context switcher)" "kubectx" "kubectx" "kubectx"
 check_optional_tool "Containers & Cloud Tools (Optional)" "kubens" "Kubens (namespace switcher)" "kubectx" "kubectx" "kubectx"
-check_optional_tool "Containers & Cloud Tools (Optional)" "k9s" "K9s (K8s terminal UI)" "k9s" "k9s" "k9s"
-check_optional_tool "Containers & Cloud Tools (Optional)" "talosctl" "Talosctl (Talos Linux CLI)" "talosctl" "talosctl" "talosctl"
+check_optional_tool "Containers & Cloud Tools (Optional)" "k9s" "K9s (K8s terminal UI)" "k9s" "k9s" ""
+check_optional_tool "Containers & Cloud Tools (Optional)" "talosctl" "Talosctl (Talos Linux CLI)" "talosctl" "talosctl" ""
 
 # -----------------------------------------------------------------------------
 # 7. Linters & Manifest Tools (Optional)
 # -----------------------------------------------------------------------------
 check_optional_tool "Linters & Manifest Tools (Optional)" "yamllint" "Yamllint (YAML linter)" "yamllint" "yamllint" "yamllint"
-check_optional_tool "Linters & Manifest Tools (Optional)" "kubeconform" "Kubeconform (K8s manifest validator)" "kubeconform" "kubeconform" "kubeconform"
+check_optional_tool "Linters & Manifest Tools (Optional)" "kubeconform" "Kubeconform (K8s manifest validator)" "kubeconform" "kubeconform" ""
 check_optional_tool "Linters & Manifest Tools (Optional)" "yq" "Yq (YAML processor)" "yq" "yq" "yq"
 check_optional_tool "Linters & Manifest Tools (Optional)" "jq" "Jq (JSON processor)" "jq" "jq" "jq"
 
@@ -343,6 +348,7 @@ check_optional_tool "Linters & Manifest Tools (Optional)" "jq" "Jq (JSON process
 # 8. Text Search & Inspection (Optional)
 # -----------------------------------------------------------------------------
 check_optional_tool "Text Search & Inspection (Optional)" "rg" "Ripgrep (fast text search)" "ripgrep" "ripgrep" "ripgrep"
+check_optional_tool "Text Search & Inspection (Optional)" "rga" "Ripgrep-all (search PDFs, archives)" "ripgrep-all" "ripgrep-all" "ripgrep-all"
 check_optional_tool "Text Search & Inspection (Optional)" "bat" "Bat (syntax-highlighted viewer)" "bat" "bat" "bat"
 check_optional_tool "Text Search & Inspection (Optional)" "glow" "Glow (terminal markdown reader)" "glow" "glow" ""
 
@@ -351,7 +357,7 @@ check_optional_tool "Text Search & Inspection (Optional)" "glow" "Glow (terminal
 # 9. Terminal Emulators & File Managers (Optional)
 # -----------------------------------------------------------------------------
 check_optional_tool "Terminal Emulators & File Managers (Optional)" "ghostty" "Ghostty (terminal emulator)" "ghostty" "ghostty" ""
-check_optional_tool "Terminal Emulators & File Managers (Optional)" "yazi" "Yazi (terminal file manager)" "yazi" "yazi" "yazi"
+check_optional_tool "Terminal Emulators & File Managers (Optional)" "yazi" "Yazi (terminal file manager)" "yazi" "yazi" ""
 
 # -----------------------------------------------------------------------------
 # Print Formatted Prerequisites Summary
@@ -409,21 +415,21 @@ if [ "$CORE_MISSING" -gt 0 ]; then
 
     if [ "$OS" = "Linux" ]; then
         if command -v pacman &>/dev/null; then
-            local_pacman="$(dedup "${MISSING_PACMAN[@]}")"
+            local_pacman="$(dedup ${MISSING_PACMAN[@]+"${MISSING_PACMAN[@]}"})"
             if command -v paru &>/dev/null; then
                 [ -n "$local_pacman" ] && echo -e "  ${CYAN}${BOLD}paru -S --needed ${local_pacman}${RESET}"
             else
                 [ -n "$local_pacman" ] && echo -e "  ${CYAN}${BOLD}sudo pacman -S --needed ${local_pacman}${RESET}"
             fi
         elif command -v apt-get &>/dev/null; then
-            local_apt="$(dedup "${MISSING_APT[@]}")"
+            local_apt="$(dedup ${MISSING_APT[@]+"${MISSING_APT[@]}"})"
             [ -n "$local_apt" ] && echo -e "  ${CYAN}${BOLD}sudo apt update && sudo apt install -y ${local_apt}${RESET}"
         elif command -v brew &>/dev/null; then
-            local_brew="$(dedup "${MISSING_BREW[@]}")"
+            local_brew="$(dedup ${MISSING_BREW[@]+"${MISSING_BREW[@]}"})"
             [ -n "$local_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${local_brew}${RESET}"
         fi
     elif [ "$OS" = "Darwin" ]; then
-        local_brew="$(dedup "${MISSING_BREW[@]}")"
+        local_brew="$(dedup ${MISSING_BREW[@]+"${MISSING_BREW[@]}"})"
         [ -n "$local_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${local_brew}${RESET}"
     fi
 
@@ -452,6 +458,9 @@ if [ "$CORE_MISSING" -gt 0 ]; then
     if ! command -v starship &>/dev/null && ! command -v brew &>/dev/null && ! command -v pacman &>/dev/null; then
         echo -e "  ${BLUE}↳ Starship: ${BOLD}curl -sS https://starship.rs/install.sh | sh${RESET}"
     fi
+    if command -v apt-get &>/dev/null && ! command -v brew &>/dev/null && ! command -v bao &>/dev/null && ! command -v vault &>/dev/null; then
+        echo -e "  ${BLUE}↳ Vault CLI: ${BOLD}not in the default apt archives; install OpenBao (https://openbao.org/downloads) or HashiCorp's apt repo${RESET}"
+    fi
 
     echo ""
     exit 1
@@ -461,17 +470,19 @@ if [ "$OPT_MISSING" -gt 0 ]; then
     info "Optional packages can be installed via:"
     if [ "$OS" = "Linux" ]; then
         if command -v pacman &>/dev/null; then
-            opt_pacman="$(dedup "${OPT_MISSING_PACMAN[@]}")"
+            opt_pacman="$(dedup ${OPT_MISSING_PACMAN[@]+"${OPT_MISSING_PACMAN[@]}"})"
             if command -v paru &>/dev/null; then
                 [ -n "$opt_pacman" ] && echo -e "  ${CYAN}${BOLD}paru -S --needed ${opt_pacman}${RESET}"
             else
                 [ -n "$opt_pacman" ] && echo -e "  ${CYAN}${BOLD}sudo pacman -S --needed ${opt_pacman}${RESET}"
             fi
         elif command -v apt-get &>/dev/null; then
-            opt_apt="$(dedup "${OPT_MISSING_APT[@]}")"
+            opt_apt="$(dedup ${OPT_MISSING_APT[@]+"${OPT_MISSING_APT[@]}"})"
             [ -n "$opt_apt" ] && echo -e "  ${CYAN}${BOLD}sudo apt update && sudo apt install -y ${opt_apt}${RESET}"
+            opt_no_apt="$(dedup ${OPT_MISSING_NO_APT[@]+"${OPT_MISSING_NO_APT[@]}"})"
+            [ -n "$opt_no_apt" ] && echo -e "  ${BLUE}↳ Not in the default apt archives (install from upstream or Homebrew): ${BOLD}${opt_no_apt}${RESET}"
         elif command -v brew &>/dev/null; then
-            opt_brew="$(dedup "${OPT_MISSING_BREW[@]}")"
+            opt_brew="$(dedup ${OPT_MISSING_BREW[@]+"${OPT_MISSING_BREW[@]}"})"
             [ -n "$opt_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${opt_brew}${RESET}"
         fi
 
@@ -482,7 +493,7 @@ if [ "$OPT_MISSING" -gt 0 ]; then
             echo -e "    ${BOLD}newgrp docker${RESET}"
         fi
     elif [ "$OS" = "Darwin" ]; then
-        opt_brew="$(dedup "${OPT_MISSING_BREW[@]}")"
+        opt_brew="$(dedup ${OPT_MISSING_BREW[@]+"${OPT_MISSING_BREW[@]}"})"
         [ -n "$opt_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${opt_brew}${RESET}"
         if ! command -v colima &>/dev/null && [ ! -d "/Applications/OrbStack.app" ] && [ ! -d "/Applications/Docker.app" ]; then
             echo -e "\n  ${BLUE}↳ Colima recommended startup (Apple Silicon vz + Rosetta):${RESET}"

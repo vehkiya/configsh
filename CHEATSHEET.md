@@ -25,7 +25,7 @@ Replace your old command-line habits with these faster, modern alternatives:
 | `pass show ...` | **`p`** | Fast secret lookup (`p github/token`). |
 | Remembering SSH hostnames / IPs | **`sshx`** *(or `fssh`)* | Interactive TUI SSH connection manager. Browse, fuzzy-search, add (<kbd>a</kbd>), delete (<kbd>d</kbd>), or connect (<kbd>Enter</kbd>). |
 | Always typing `ssh user@host...` | **`sshx add`** | Interactive Huh wizard to configure and save SSH hosts to `~/.ssh/config`. Supports key/password auth, key generation, and `ssh-copy-id`. |
-| Forgetting shell shortcuts/aliases | **`cs`** *(or `cheatsheet`)* | Opens this entire cheatsheet in an interactive terminal pager using `glow`. |
+| Forgetting shell shortcuts/aliases | **`cs`** *(or `cheatsheet`)* | Renders this entire cheatsheet in the terminal with `glow` (`cs -p` to page through it). |
 | Typing commands with API keys/tokens | `<space>command` | Prefix with a **single space**; it will never be written to your shell history. |
 
 ---
@@ -34,7 +34,7 @@ Replace your old command-line habits with these faster, modern alternatives:
 
 | Command | Tool | Description |
 | :--- | :--- | :--- |
-| **`cs`** / **`cheatsheet`** | `glow` | **Interactive Cheatsheet**: Opens this document in a styled, searchable terminal pager with mouse scroll. |
+| **`cs`** / **`cheatsheet`** | `glow` | **Interactive Cheatsheet**: Renders this document with `glow`, fitted to the terminal width; pass `-p` to open it in a pager. |
 | **`glow <file.md>`** | `glow` | Command-line markdown reader with GitHub styling, tables, syntax highlighting, and word-wrap. |
 | **`fif [query]`** | `rg` + `fzf` + `bat` | **Interactive Find In Files**: Live ripgrep search with syntax-highlighted preview. Pressing <kbd>Enter</kbd> opens `$EDITOR` directly at the matched line. |
 | **`rg <pattern>`** | `ripgrep` | Ultra-fast recursive regex search across project files (honors `.gitignore`). |
@@ -120,5 +120,5 @@ Replace your old command-line habits with these faster, modern alternatives:
 | Command | File / Script | Description |
 | :--- | :--- | :--- |
 | **`./setup.sh`** | [`setup.sh`](setup.sh) | Idempotent setup: verifies tools, creates symlinks, hardens permissions (`700`/`600`), and configures services. |
-| **`./setup.sh --verify`** | [`scripts/doctor.sh`](scripts/doctor.sh) | 44-point read-only health check: checks symlink integrity, Git repo tamper detection, agent sockets, and permissions. |
+| **`./setup.sh --verify`** | [`scripts/doctor.sh`](scripts/doctor.sh) | Read-only health check: checks symlink integrity, Git repo tamper detection, agent sockets, and permissions. |
 | **`~/.zshrc.local`** | Local overrides | Machine-specific private overrides and secrets (untracked by Git, secured at `chmod 600`). |

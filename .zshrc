@@ -1,6 +1,22 @@
 # Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
+# PATH comes first so Oh My Zsh plugins and every 'command -v' check below can
+# see Homebrew and ~/.local/bin tools (macOS doesn't put Homebrew on PATH itself)
+typeset -U path PATH
+
+# Homebrew environment (supports Apple Silicon macOS, Intel macOS, and Linuxbrew)
+if [[ -x "/opt/homebrew/bin/brew" ]]; then
+  eval "$(/opt/homebrew/bin/brew shellenv zsh)"
+elif [[ -x "/usr/local/bin/brew" ]]; then
+  eval "$(/usr/local/bin/brew shellenv zsh)"
+elif [[ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
+  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
+fi
+
+# User local bin paths (portable across macOS and Linux)
+[[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
+
 # Theme: Disabled because Starship manages the prompt
 ZSH_THEME=""
 
@@ -37,7 +53,6 @@ plugins=(
   helm
   node
   npm
-  nvm
   emoji-clock
   vault
   pass
@@ -70,7 +85,9 @@ if [[ -z "$LANG" || "$LANG" == "C" || "$LANG" == "POSIX" ]]; then
 fi
 
 # GPG & SSH Agent Environment (OS Keychain integration)
-export GPG_TTY="${GPG_TTY:-$(tty 2>/dev/null || echo '')}"
+# Always this shell's own terminal: a GPG_TTY inherited from a parent (tmux,
+# nested shells) would make pinentry prompt on the wrong terminal
+[[ -n "$TTY" ]] && export GPG_TTY="$TTY"
 
 # SSH Agent Socket (systemd user socket on Linux, launchd on macOS)
 if [[ -z "$SSH_AUTH_SOCK" ]]; then
@@ -134,15 +151,6 @@ if command -v vault &>/dev/null; then
   complete -o nospace -C vault bao 2>/dev/null || true
 fi
 
-# Homebrew environment (supports Apple Silicon macOS, Intel macOS, and Linuxbrew)
-if [[ -x "/opt/homebrew/bin/brew" ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv zsh)"
-elif [[ -x "/usr/local/bin/brew" ]]; then
-  eval "$(/usr/local/bin/brew shellenv zsh)"
-elif [[ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
-fi
-
 # Tool initializations (graceful execution if installed)
 command -v fnm &>/dev/null && eval "$(fnm env --use-on-cd 2>/dev/null || fnm env)"
 if command -v fzf &>/dev/null; then
@@ -176,11 +184,7 @@ if command -v fzf &>/dev/null; then
   fi
 fi
 command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
-[[ -f "$HOME/.config/direnv/direnvrc" ]] && source "$HOME/.config/direnv/direnvrc"
 command -v starship &>/dev/null && eval "$(starship init zsh)"
-
-# User local bin paths (portable across macOS and Linux)
-[[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
 
 # Bun (if installed)
 export BUN_INSTALL="$HOME/.bun"
@@ -192,6 +196,8 @@ export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 
 # Local / Machine-specific secrets & overrides (never committed to git)
+# Sourced here rather than last so its PATH additions are visible to the tool
+# checks below and it can set ZOXIDE_REPLACE_CD; definitions below override it
 [[ -f "$HOME/.zshrc.local" ]] && source "$HOME/.zshrc.local"
 
 # Zoxide navigation (smarter cd command - set ZOXIDE_REPLACE_CD=true in ~/.zshrc.local to alias 'cd')
@@ -248,17 +254,27 @@ fi
 # fif: Interactive Find In Files (live ripgrep + fzf + bat preview)
 if command -v rg &>/dev/null && command -v fzf &>/dev/null; then
   fif() {
-    local bat_cmd="cat"
-    command -v bat &>/dev/null && bat_cmd="bat --style=numbers --color=always --line-range :500"
-    command -v batcat &>/dev/null && bat_cmd="batcat --style=numbers --color=always --line-range :500"
+    local rg_cmd="rg --column --line-number --no-heading --color=always --smart-case --"
+    local query="$*" initial="true"
+    [[ -n "$query" ]] && initial="$rg_cmd ${(q)query}"
 
-    rg --column --line-number --no-heading --color=always --smart-case "${*:-}" 2>/dev/null |
-      fzf --ansi \
+    local preview="cat {1}"
+    if command -v bat &>/dev/null; then
+      preview="bat --style=numbers --color=always --line-range :500 --highlight-line {2} {1}"
+    elif command -v batcat &>/dev/null; then
+      preview="batcat --style=numbers --color=always --line-range :500 --highlight-line {2} {1}"
+    fi
+
+    # ripgrep re-runs on every keystroke (fzf only displays its results); an
+    # empty query lists nothing instead of every line under the current dir
+    FZF_DEFAULT_COMMAND="$initial" \
+      fzf --ansi --disabled --query "$query" \
+          --bind "change:reload:sleep 0.1; [ -n {q} ] && $rg_cmd {q} || true" \
           --color "hl:-1:underline,hl+:-1:underline:reverse" \
           --delimiter : \
-          --preview "$bat_cmd {1} --highlight-line {2}" \
+          --preview "$preview" \
           --preview-window "up,60%,border-bottom,+{2}+3/3,~3" \
-          --bind "enter:become(${EDITOR:-vim} +{2} {1})"
+          --bind "enter:execute(${EDITOR:-vim} +{2} {1})+abort"
   }
 fi
 

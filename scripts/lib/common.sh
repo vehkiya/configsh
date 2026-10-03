@@ -22,6 +22,42 @@ warn()    { echo -e "${YELLOW}  ⚠${RESET} $1"; }
 alert()   { echo -e "${RED}  ✗${RESET} $1"; }
 header()  { echo -e "\n${BOLD}${CYAN}$1${RESET}"; }
 
+# Pick a backup path that never overwrites an earlier backup
+backup_path() {
+    local path="$1"
+    if [ -e "${path}.bak" ] || [ -L "${path}.bak" ]; then
+        echo "${path}.bak.$(date '+%Y%m%d%H%M%S')"
+    else
+        echo "${path}.bak"
+    fi
+}
+
+# List SSH private keys in ~/.ssh (only files with a private key header, so
+# configs, backups and other files aren't mistaken for keys)
+ssh_private_keys() {
+    local f
+    for f in "$HOME/.ssh"/*; do
+        [ -f "$f" ] || continue
+        case "$f" in *.pub) continue ;; esac
+        if head -n 1 "$f" 2>/dev/null | grep -q -e '-----BEGIN .*PRIVATE KEY-----'; then
+            echo "$f"
+        fi
+    done
+}
+
+# Classify an SSH private key as "encrypted", "unencrypted", or "fido" (an
+# unencrypted security-key handle, which is useless without the hardware key)
+ssh_key_protection() {
+    local pub
+    if ! pub="$(ssh-keygen -y -P "" -f "$1" 2>/dev/null)"; then
+        echo "encrypted"
+    elif [[ "$pub" == sk-* ]]; then
+        echo "fido"
+    else
+        echo "unencrypted"
+    fi
+}
+
 # Parse common flags (-y / --yes)
 ASSUME_YES="${ASSUME_YES:-false}"
 for arg in "$@"; do
