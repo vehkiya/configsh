@@ -24,11 +24,27 @@ header()  { echo -e "\n${BOLD}${CYAN}$1${RESET}"; }
 
 # Pick a backup path that never overwrites an earlier backup
 backup_path() {
-    local path="$1"
-    if [ -e "${path}.bak" ] || [ -L "${path}.bak" ]; then
-        echo "${path}.bak.$(date '+%Y%m%d%H%M%S')"
+    local path="$1" dest="${1}.bak" ts i=1
+    if [ -e "$dest" ] || [ -L "$dest" ]; then
+        ts="$(date '+%Y%m%d%H%M%S')"
+        dest="${path}.bak.${ts}"
+        while [ -e "$dest" ] || [ -L "$dest" ]; do
+            dest="${path}.bak.${ts}.${i}"
+            i=$((i + 1))
+        done
+    fi
+    echo "$dest"
+}
+
+# Replace a file with a fully written temp file: an atomic rename for regular
+# files, a write-through for symlinks (e.g. a dotfiles-managed ~/.ssh/config)
+# so the link itself survives
+replace_file() {
+    local tmp="$1" dest="$2"
+    if [ -L "$dest" ]; then
+        cat "$tmp" > "$dest" && rm -f "$tmp"
     else
-        echo "${path}.bak"
+        mv "$tmp" "$dest"
     fi
 }
 
@@ -49,7 +65,11 @@ ssh_private_keys() {
 # unencrypted security-key handle, which is useless without the hardware key)
 ssh_key_protection() {
     local pub
-    if ! pub="$(ssh-keygen -y -P "" -f "$1" 2>/dev/null)"; then
+    # Security-key handles are recognised from their .pub when present, so
+    # ssh-keygen never has to load them
+    if [ -f "$1.pub" ] && grep -q '^sk-' "$1.pub"; then
+        echo "fido"
+    elif ! pub="$(ssh-keygen -y -P "" -f "$1" 2>/dev/null)"; then
         echo "encrypted"
     elif [[ "$pub" == sk-* ]]; then
         echo "fido"

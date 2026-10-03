@@ -6,8 +6,13 @@
 # =============================================================================
 
 # 1. Graphical Environment (macOS Quartz / Wayland / X11)
-# macOS sets neither DISPLAY nor WAYLAND_DISPLAY, so it's checked on its own
-if [ "$(uname)" = "Darwin" ]; then
+# PINENTRY_USER_DATA=USE_TTY (exported by .zshrc in SSH sessions; gpg-agent
+# forwards it here, unlike SSH_CONNECTION) skips GUI prompts that would appear
+# on the remote machine's desktop.
+# macOS sets neither DISPLAY nor WAYLAND_DISPLAY, so it's checked on its own.
+if [ "${PINENTRY_USER_DATA:-}" = "USE_TTY" ]; then
+    :
+elif [ "$(uname)" = "Darwin" ]; then
     if [ -x "/opt/homebrew/bin/pinentry-mac" ]; then
         exec /opt/homebrew/bin/pinentry-mac "$@"
     elif [ -x "/usr/local/bin/pinentry-mac" ]; then

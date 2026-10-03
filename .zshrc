@@ -88,6 +88,9 @@ fi
 # Always this shell's own terminal: a GPG_TTY inherited from a parent (tmux,
 # nested shells) would make pinentry prompt on the wrong terminal
 [[ -n "$TTY" ]] && export GPG_TTY="$TTY"
+# Over SSH, ask pinentry-wrapper for a terminal prompt instead of a GUI one on
+# the remote desktop (gpg-agent forwards PINENTRY_USER_DATA to pinentry)
+[[ -n "$SSH_CONNECTION" ]] && export PINENTRY_USER_DATA="USE_TTY"
 
 # SSH Agent Socket (systemd user socket on Linux, launchd on macOS)
 if [[ -z "$SSH_AUTH_SOCK" ]]; then
@@ -256,7 +259,7 @@ if command -v rg &>/dev/null && command -v fzf &>/dev/null; then
   fif() {
     local rg_cmd="rg --column --line-number --no-heading --color=always --smart-case --"
     local query="$*" initial="true"
-    [[ -n "$query" ]] && initial="$rg_cmd ${(q)query}"
+    [[ -n "$query" ]] && initial="$rg_cmd ${(q)query} 2>/dev/null"
 
     local preview="cat {1}"
     if command -v bat &>/dev/null; then
@@ -266,15 +269,16 @@ if command -v rg &>/dev/null && command -v fzf &>/dev/null; then
     fi
 
     # ripgrep re-runs on every keystroke (fzf only displays its results); an
-    # empty query lists nothing instead of every line under the current dir
+    # empty query lists nothing instead of every line under the current dir, and
+    # regex errors from half-typed patterns are hidden instead of garbling fzf
     FZF_DEFAULT_COMMAND="$initial" \
       fzf --ansi --disabled --query "$query" \
-          --bind "change:reload:sleep 0.1; [ -n {q} ] && $rg_cmd {q} || true" \
+          --bind "change:reload:sleep 0.1; [ -n {q} ] && $rg_cmd {q} 2>/dev/null || true" \
           --color "hl:-1:underline,hl+:-1:underline:reverse" \
           --delimiter : \
           --preview "$preview" \
           --preview-window "up,60%,border-bottom,+{2}+3/3,~3" \
-          --bind "enter:execute(${EDITOR:-vim} +{2} {1})+abort"
+          --bind "enter:execute([ -n {1} ] && ${EDITOR:-vim} +{2} {1})+abort"
   }
 fi
 

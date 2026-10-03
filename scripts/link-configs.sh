@@ -112,59 +112,81 @@ zshrc_custom_code() {
     ' "$1"
 }
 
+# Does this zsh snippet parse? (false when zsh itself is missing)
+zsh_parses() {
+    command -v zsh &>/dev/null && printf '%s' "$1" | zsh -n 2>/dev/null
+}
+
+# Is every line of this snippet already in the repo's .zshrc?
+zshrc_snippet_in_repo() {
+    local line trimmed
+    while IFS= read -r line; do
+        trimmed="$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+        if ! grep -Fxq -e "$line" "$DOTFILES_DIR/.zshrc" 2>/dev/null && ! grep -Fxq -e "$trimmed" "$DOTFILES_DIR/.zshrc" 2>/dev/null; then
+            return 1
+        fi
+    done <<< "${1%$'\n'}"
+}
+
 # Scenario B: ~/.zshrc is a regular file (e.g. the OMZ or distro template).
-# Lines not already in the repo's .zshrc are carried over to ~/.zshrc.local.
-# They are only activated when the file is flat; multi-line blocks can't be
-# split line-by-line safely and another prompt/framework loader would fight
-# Starship, so in those cases everything is copied commented-out for review.
+# Its code is split into complete statements with zsh's own parser (lines are
+# joined until `zsh -n` accepts them), so if/for/function blocks stay whole.
+# Statements already in the repo's .zshrc are dropped and the rest is carried
+# over to ~/.zshrc.local. Anything that loads another prompt/framework (it would
+# fight Starship) or never parses is copied commented-out for review instead.
 rescue_physical_zshrc() {
     local target="$HOME/.zshrc"
-    local repo_zshrc="$DOTFILES_DIR/.zshrc"
+    local framework_re='p10k|powerlevel|prezto|zinit|zplug|antigen|antidote|oh-my-posh|promptinit|zsh-config'
 
     if [ ! -f "$target" ] || [ -L "$target" ]; then
         return 0
     fi
     warn "Found existing physical file at $target (not a symlink)."
 
-    local backup code line trimmed unique_lines=""
+    local backup code line unit chunk="" active="" commented=""
+    local -a units=()
     backup="$(backup_path "$target")"
     code="$(zshrc_custom_code "$target")"
 
     if [ -n "$code" ]; then
         while IFS= read -r line; do
-            trimmed="$(echo "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-            if ! grep -Fxq -e "$line" "$repo_zshrc" 2>/dev/null && ! grep -Fxq -e "$trimmed" "$repo_zshrc" 2>/dev/null; then
-                unique_lines+="$line"$'\n'
+            chunk+="$line"$'\n'
+            if zsh_parses "$chunk"; then
+                units+=("$chunk")
+                chunk=""
             fi
         done <<< "$code"
     fi
+    if [ -n "$chunk" ]; then
+        units+=("$chunk")
+    fi
+
+    for unit in ${units[@]+"${units[@]}"}; do
+        if zshrc_snippet_in_repo "$unit"; then
+            continue
+        elif grep -Eiq "$framework_re" <<< "$unit" || ! zsh_parses "$unit"; then
+            commented+="$(sed 's/^/# /' <<< "${unit%$'\n'}")"$'\n'
+        else
+            active+="$unit"
+        fi
+    done
 
     if grep -Eq '^[[:space:]]*(ZSH_THEME=|plugins=\()' "$target"; then
         info "Skipping Oh My Zsh setup lines (ZSH_THEME, plugins, source); configsh's .zshrc manages them."
         echo -e "    ${BLUE}↳ Your previous plugin list stays available in $backup${RESET}"
     fi
 
-    if [ -z "$unique_lines" ]; then
+    if [ -z "$active$commented" ]; then
         success "No custom settings to carry over from $target"
     else
-        local block_re='^[[:space:]]*(if|for|while|until|case|select|repeat|function)([[:space:]]|$)|(^|[[:space:];])(then|do)[[:space:]]*$|[{(][[:space:]]*$|\\$|^[[:space:]]*(fi|done|esac|else|elif|[})])([[:space:];]|$)'
-        local framework_re='p10k|powerlevel|prezto|zinit|zplug|antigen|antidote|oh-my-posh|promptinit|zsh-config'
-        local mode="active" to_write="$unique_lines"
-
-        if grep -Eq "$block_re" <<< "$code" || grep -Eiq "$framework_re" <<< "$code" ||
-           { command -v zsh &>/dev/null && ! printf '%s' "$unique_lines" | zsh -n 2>/dev/null; }; then
-            mode="commented"
-            to_write="$(sed 's/^/# /' <<< "$code")"$'\n'
-        fi
-
-        if [ "$mode" = "active" ]; then
-            info "Detected custom or installer configuration in existing ~/.zshrc:"
-        else
-            info "Detected custom configuration in existing ~/.zshrc with multi-line blocks or a prompt/framework loader:"
-            echo -e "    ${YELLOW}↳ It will be copied commented-out so it can't break the shell; uncomment what you still need.${RESET}"
-        fi
+        local review_note="# Commented out for review (loads another prompt/framework, or doesn't parse):"
+        info "Detected custom or installer configuration in existing ~/.zshrc:"
         echo -e "${CYAN}----------------------------------------------------------------${RESET}"
-        echo -n "$to_write"
+        echo -n "$active"
+        if [ -n "$commented" ]; then
+            echo -e "${YELLOW}${review_note}${RESET}"
+            echo -n "$commented"
+        fi
         echo -e "${CYAN}----------------------------------------------------------------${RESET}"
 
         local migrate_choice="y"
@@ -178,11 +200,12 @@ rescue_physical_zshrc() {
                 echo ""
                 echo "# -----------------------------------------------------------------------------"
                 echo "# Rescued from physical ~/.zshrc on $(date '+%Y-%m-%d %H:%M:%S') (original: $backup)"
-                if [ "$mode" = "commented" ]; then
-                    echo "# Commented out for review: uncomment what you still need."
-                fi
                 echo "# -----------------------------------------------------------------------------"
-                echo -n "$to_write"
+                echo -n "$active"
+                if [ -n "$commented" ]; then
+                    echo "$review_note"
+                    echo -n "$commented"
+                fi
             } >> "$HOME/.zshrc.local"
             chmod 600 "$HOME/.zshrc.local"
             success "Added custom configuration to ~/.zshrc.local"

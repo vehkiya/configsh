@@ -40,8 +40,7 @@ elif ! grep -q "pinentry-wrapper" "$GPG_AGENT_CONF" 2>/dev/null; then
         grep -Eq '^[[:space:]]*default-cache-ttl[[:space:]]' "$GPG_AGENT_CONF" || echo "default-cache-ttl 86400"
         grep -Eq '^[[:space:]]*max-cache-ttl[[:space:]]' "$GPG_AGENT_CONF" || echo "max-cache-ttl 2592000"
     } >> "$GPG_AGENT_TMP"
-    cat "$GPG_AGENT_TMP" > "$GPG_AGENT_CONF"
-    rm -f "$GPG_AGENT_TMP"
+    replace_file "$GPG_AGENT_TMP" "$GPG_AGENT_CONF"
     chmod 600 "$GPG_AGENT_CONF"
     success "Added pinentry-wrapper to existing gpg-agent.conf (backup: $GPG_AGENT_BACKUP)"
     gpgconf --reload gpg-agent 2>/dev/null || true
@@ -61,8 +60,20 @@ fi
 
 # Ensure AddKeysToAgent is enabled in ~/.ssh/config
 SSH_CONFIG="$HOME/.ssh/config"
+SSH_CONFIG_BACKUP=""
+
+# Back up ~/.ssh/config once, before the first change this run makes to it
+backup_ssh_config() {
+    if [ -z "$SSH_CONFIG_BACKUP" ]; then
+        SSH_CONFIG_BACKUP="$(backup_path "$SSH_CONFIG")"
+        cp -p "$SSH_CONFIG" "$SSH_CONFIG_BACKUP"
+        info "Backed up ~/.ssh/config to $SSH_CONFIG_BACKUP"
+    fi
+}
+
 if [ -f "$SSH_CONFIG" ]; then
     if ! grep -Eqi '^[[:space:]]*AddKeysToAgent[[:space:]]' "$SSH_CONFIG" 2>/dev/null; then
+        backup_ssh_config
         cat <<'EOF' >> "$SSH_CONFIG"
 
 # Automatically cache unlocked keys in ssh-agent
@@ -80,10 +91,10 @@ EOF
     # whole config unless it's told to ignore it before the option appears
     if grep -Eqi '^[[:space:]]*UseKeychain[[:space:]]' "$SSH_CONFIG" &&
        ! grep -Eqi '^[[:space:]]*IgnoreUnknown[[:space:]].*UseKeychain' "$SSH_CONFIG"; then
+        backup_ssh_config
         SSH_CONFIG_TMP="$(mktemp "${SSH_CONFIG}.XXXXXX")"
         { echo "IgnoreUnknown UseKeychain"; cat "$SSH_CONFIG"; } > "$SSH_CONFIG_TMP"
-        cat "$SSH_CONFIG_TMP" > "$SSH_CONFIG"
-        rm -f "$SSH_CONFIG_TMP"
+        replace_file "$SSH_CONFIG_TMP" "$SSH_CONFIG"
         chmod 600 "$SSH_CONFIG"
         success "Added 'IgnoreUnknown UseKeychain' to the top of ~/.ssh/config"
     fi
