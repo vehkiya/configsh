@@ -176,7 +176,11 @@ else
 fi
 
 CUSTOM_PLUGINS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
-if [ -d "$CUSTOM_PLUGINS_DIR/fzf-tab" ] || [ -f "/usr/share/zsh/plugins/fzf-tab/fzf-tab.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/fzf-tab/fzf-tab.zsh" ] || [ -f "/opt/homebrew/share/fzf-tab/fzf-tab.zsh" ]; then
+if [ -d "$CUSTOM_PLUGINS_DIR/fzf-tab" ] || \
+   [ -f "/usr/share/zsh/plugins/fzf-tab/fzf-tab.zsh" ] || \
+   [ -f "/home/linuxbrew/.linuxbrew/share/fzf-tab/fzf-tab.zsh" ] || \
+   [ -f "/opt/homebrew/share/fzf-tab/fzf-tab.zsh" ] || \
+   [ -f "/usr/local/share/fzf-tab/fzf-tab.zsh" ]; then
     add_result "Core Shell & Terminal" "ok" "Plugin: fzf-tab" "Installed"
 else
     add_result "Core Shell & Terminal" "missing" "Plugin: fzf-tab" "Not installed"
@@ -186,7 +190,12 @@ else
     MISSING_NAMES+=("fzf-tab plugin")
 fi
 
-if [ -d "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" ] || [ -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || [ -f "/opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+if [ -d "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" ] || \
+   [ -f "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || \
+   [ -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || \
+   [ -f "/home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || \
+   [ -f "/opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || \
+   [ -f "/usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
     add_result "Core Shell & Terminal" "ok" "Plugin: zsh-autosuggestions" "Installed"
 else
     add_result "Core Shell & Terminal" "missing" "Plugin: zsh-autosuggestions" "Not installed"
@@ -196,7 +205,12 @@ else
     MISSING_NAMES+=("zsh-autosuggestions plugin")
 fi
 
-if [ -d "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" ] || [ -f "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || [ -f "/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+if [ -d "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" ] || \
+   [ -f "/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || \
+   [ -f "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || \
+   [ -f "/home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || \
+   [ -f "/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || \
+   [ -f "/usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
     add_result "Core Shell & Terminal" "ok" "Plugin: zsh-syntax-highlighting" "Installed"
 else
     add_result "Core Shell & Terminal" "missing" "Plugin: zsh-syntax-highlighting" "Not installed"
@@ -420,10 +434,16 @@ if [ "$CORE_MISSING" -gt 0 ]; then
     if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fzf-tab" ]; then
         echo -e "  ${BLUE}↳ fzf-tab: ${BOLD}git clone https://github.com/Aloxaf/fzf-tab \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/fzf-tab${RESET}"
     fi
-    if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" ] && ! command -v pacman &>/dev/null && ! command -v brew &>/dev/null; then
+    if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" ] && \
+       [ ! -f "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] && \
+       [ ! -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] && \
+       ! command -v pacman &>/dev/null && ! command -v brew &>/dev/null && ! command -v apt-get &>/dev/null; then
         echo -e "  ${BLUE}↳ zsh-autosuggestions: ${BOLD}git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions${RESET}"
     fi
-    if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting" ] && ! command -v pacman &>/dev/null && ! command -v brew &>/dev/null; then
+    if [ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting" ] && \
+       [ ! -f "/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] && \
+       [ ! -f "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] && \
+       ! command -v pacman &>/dev/null && ! command -v brew &>/dev/null && ! command -v apt-get &>/dev/null; then
         echo -e "  ${BLUE}↳ zsh-syntax-highlighting: ${BOLD}git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting${RESET}"
     fi
     if ! command -v fnm &>/dev/null && ! command -v brew &>/dev/null; then

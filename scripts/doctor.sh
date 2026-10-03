@@ -146,21 +146,35 @@ else
 fi
 
 CUSTOM_PLUGINS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins"
-if [ -d "$CUSTOM_PLUGINS_DIR/fzf-tab" ] || [ -f "/usr/share/zsh/plugins/fzf-tab/fzf-tab.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/fzf-tab/fzf-tab.zsh" ] || [ -f "/opt/homebrew/share/fzf-tab/fzf-tab.zsh" ]; then
+if [ -d "$CUSTOM_PLUGINS_DIR/fzf-tab" ] || \
+   [ -f "/usr/share/zsh/plugins/fzf-tab/fzf-tab.zsh" ] || \
+   [ -f "/home/linuxbrew/.linuxbrew/share/fzf-tab/fzf-tab.zsh" ] || \
+   [ -f "/opt/homebrew/share/fzf-tab/fzf-tab.zsh" ] || \
+   [ -f "/usr/local/share/fzf-tab/fzf-tab.zsh" ]; then
     pass "Plugin: fzf-tab installed"
 else
     fail "Plugin: fzf-tab missing"
     echo -e "        ${YELLOW}↳ Remediation: git clone https://github.com/Aloxaf/fzf-tab \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/fzf-tab${RESET}"
 fi
 
-if [ -d "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" ] || [ -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || [ -f "/opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+if [ -d "$CUSTOM_PLUGINS_DIR/zsh-autosuggestions" ] || \
+   [ -f "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || \
+   [ -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || \
+   [ -f "/home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || \
+   [ -f "/opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ] || \
+   [ -f "/usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
     pass "Plugin: zsh-autosuggestions installed"
 else
     fail "Plugin: zsh-autosuggestions missing"
     echo -e "        ${YELLOW}↳ Remediation: git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-\$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions${RESET}"
 fi
 
-if [ -d "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" ] || [ -f "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || [ -f "/home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || [ -f "/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+if [ -d "$CUSTOM_PLUGINS_DIR/zsh-syntax-highlighting" ] || \
+   [ -f "/usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || \
+   [ -f "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || \
+   [ -f "/home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || \
+   [ -f "/opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] || \
+   [ -f "/usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
     pass "Plugin: zsh-syntax-highlighting installed"
 else
     fail "Plugin: zsh-syntax-highlighting missing"

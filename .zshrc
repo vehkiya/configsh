@@ -56,8 +56,18 @@ fi
 # Load Oh My Zsh if installed
 [[ -f "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
 
-# Language environment
-export LANG="en_US.UTF-8"
+# Language environment (preserve existing valid UTF-8 locale; fallback gracefully if ungenerated)
+if [[ -z "$LANG" || "$LANG" == "C" || "$LANG" == "POSIX" ]]; then
+  if locale -a 2>/dev/null | grep -qEi '^en_US\.utf-?8$'; then
+    export LANG="en_US.UTF-8"
+  elif locale -a 2>/dev/null | grep -qEi '^C\.utf-?8$'; then
+    export LANG="C.UTF-8"
+  elif [[ "$(uname)" == "Darwin" ]]; then
+    export LANG="en_US.UTF-8"
+  else
+    export LANG="C.UTF-8"
+  fi
+fi
 
 # GPG & SSH Agent Environment (OS Keychain integration)
 export GPG_TTY="${GPG_TTY:-$(tty 2>/dev/null || echo '')}"
@@ -135,7 +145,36 @@ fi
 
 # Tool initializations (graceful execution if installed)
 command -v fnm &>/dev/null && eval "$(fnm env --use-on-cd 2>/dev/null || fnm env)"
-command -v fzf &>/dev/null && eval "$(fzf --zsh)"
+if command -v fzf &>/dev/null; then
+  if _fzf_init="$(fzf --zsh 2>/dev/null)"; then
+    eval "$_fzf_init"
+    unset _fzf_init
+  else
+    for _fzf_comp in \
+      "/usr/share/doc/fzf/examples/completion.zsh" \
+      "/usr/share/fzf/completion.zsh" \
+      "/opt/homebrew/opt/fzf/shell/completion.zsh" \
+      "/usr/local/opt/fzf/shell/completion.zsh" \
+      "$HOME/.fzf/shell/completion.zsh"; do
+      if [[ -f "$_fzf_comp" ]]; then
+        source "$_fzf_comp"
+        break
+      fi
+    done
+    for _fzf_key in \
+      "/usr/share/doc/fzf/examples/key-bindings.zsh" \
+      "/usr/share/fzf/key-bindings.zsh" \
+      "/opt/homebrew/opt/fzf/shell/key-bindings.zsh" \
+      "/usr/local/opt/fzf/shell/key-bindings.zsh" \
+      "$HOME/.fzf/shell/key-bindings.zsh"; do
+      if [[ -f "$_fzf_key" ]]; then
+        source "$_fzf_key"
+        break
+      fi
+    done
+    unset _fzf_comp _fzf_key
+  fi
+fi
 command -v direnv &>/dev/null && eval "$(direnv hook zsh)"
 [[ -f "$HOME/.config/direnv/direnvrc" ]] && source "$HOME/.config/direnv/direnvrc"
 command -v starship &>/dev/null && eval "$(starship init zsh)"
