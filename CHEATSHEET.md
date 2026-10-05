@@ -25,6 +25,7 @@ Replace your old command-line habits with these faster, modern alternatives:
 | `pass show ...` | **`p`** | Fast secret lookup (`p github/token`). |
 | Remembering SSH hostnames / IPs | **`sshx`** *(or `fssh`)* | Interactive TUI SSH connection manager. Browse, fuzzy-search, add (<kbd>a</kbd>), delete (<kbd>d</kbd>), or connect (<kbd>Enter</kbd>). |
 | Always typing `ssh user@host...` | **`sshx add`** | Interactive Huh wizard to configure and save SSH hosts to `~/.ssh/config`. Supports key/password auth, key generation, and `ssh-copy-id`. |
+| Juggling work and personal Git identities | **`dop`** *(`doppel`)* | Per-folder Git accounts: each with its own commit identity, SSH key and signing key. `dop whoami` shows which applies. See section 8. |
 | Forgetting shell shortcuts/aliases | **`cs`** *(or `cheatsheet`)* | Renders this entire cheatsheet in the terminal with `glow` (`cs -p` to page through it). |
 | Typing commands with API keys/tokens | `<space>command` | Prefix with a **single space**; it will never be written to your shell history. |
 
@@ -128,52 +129,44 @@ Replace your old command-line habits with these faster, modern alternatives:
 
 ---
 
-## 🔏 8. Git Commit Signing with SSH Keys
+## 🔏 8. Git Accounts & Commit Signing (`doppel`)
 
-Sign commits and tags with an SSH key instead of GPG, so they show as **Verified** on GitHub/GitLab.
+[`doppel`](https://github.com/vehkiya/doppel) (alias **`dop`**) gives each Git account its own commit identity, SSH key and signing key, and applies it by folder. Repos under `~/projects/work` commit, push and sign as work; everything else uses your default account. Nothing to switch by hand.
 
-**1. Generate a dedicated signing key.** Always set a passphrase, because `./setup.sh --verify` flags unencrypted keys.
+| Command | Description |
+| :--- | :--- |
+| **`dop`** | **Account browser**: accounts beside their details. Edit (<kbd>e</kbd>), add (<kbd>a</kbd>), bind a folder (<kbd>b</kbd>), make default (<kbd>*</kbd>), export (<kbd>x</kbd>), upload (<kbd>u</kbd>), test (<kbd>t</kbd>), delete (<kbd>d</kbd>). |
+| **`dop add`** | Wizard: identity, hosts, folders, auth key (keep, generate, or pick one in `~/.ssh`), signing. <kbd>Shift</kbd>+<kbd>Tab</kbd> goes back, <kbd>Esc</kbd> cancels. The first account can start from your current `~/.gitconfig` identity. |
+| **`dop whoami [path]`** | Which account applies here, and why, with a live login check against the repo's host. Works on clone targets that don't exist yet. |
+| **`dop bind <id> <folder>`** | Use an account for every repo inside a folder (nested folders: the most specific wins). |
+| **`dop upload <id>`** | Add the account's keys to its GitHub user through `gh` (github.com, GHE.com or Enterprise Server), without switching `gh`'s active account. |
+| **`dop export <id>`** | Print and copy a public key, with steps for GitHub, GitLab, Gitea/Forgejo and other hosts. |
+| **`dop test`** | Log in to each host and sign a test message, as Git would. |
+| **`dop doctor [--fix]`** | Find anything that could make Git use the wrong account. Also part of `./setup.sh --verify`. |
+| **`dop uninstall`** | Take doppel back out of `~/.gitconfig` and `allowed_signers` (accounts and keys are kept). |
+
+**Setting up two accounts:**
 
 ```bash
-ssh-keygen -t ed25519 -C "you@example.com" -f ~/.ssh/id_ed25519_signing
+dop add                     # personal: start from your ~/.gitconfig identity, make it the default
+dop add                     # work: bind ~/projects/work, generate a key, sign with it
+dop upload work             # add work's keys to its GitHub user (needs `gh auth login` as that user)
+dop test                    # check both log in as the right GitHub user and sign
 ```
 
-**2. Tell Git to sign with it:**
+Commands that change files take `--dry-run` to preview the diff first. Keys held by an agent (1Password, Proton Pass, or loaded from Vault/OpenBao with `ssh-add -`) work too: point the account at the `.pub` file.
+
+### Signing by hand (what doppel automates)
 
 ```bash
+ssh-keygen -t ed25519 -C "you@example.com" -f ~/.ssh/id_ed25519_signing   # set a passphrase
 git config --global gpg.format ssh
 git config --global user.signingkey ~/.ssh/id_ed25519_signing.pub
 git config --global commit.gpgsign true
 git config --global tag.gpgsign true
-```
-
-**3. Trust your own key for local verification** (needed for `git log --show-signature`):
-
-```bash
 echo "$(git config user.email) namespaces=\"git\" $(cat ~/.ssh/id_ed25519_signing.pub)" \
   >> ~/.ssh/allowed_signers
 git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers
-```
-
-**4. Load the key into the agent** so commits don't prompt for the passphrase (KWallet remembers it via `ksshaskpass` on KDE):
-
-```bash
-ssh-add ~/.ssh/id_ed25519_signing                         # Linux
-ssh-add --apple-use-keychain ~/.ssh/id_ed25519_signing    # macOS (Keychain)
-```
-
-**5. Upload the public key as a signing key.** It's registered separately from authentication keys:
-
-```bash
-gh auth refresh -h github.com -s admin:ssh_signing_key    # one-time scope grant
 gh ssh-key add ~/.ssh/id_ed25519_signing.pub --type signing --title "$(hostname) signing"
-```
-
-On GitLab, go to **Preferences → SSH Keys** and set the usage type to **Signing**. For the **Verified** badge, your commit email (`git config user.email`) must also be a verified email on the account.
-
-**6. Verify it works:**
-
-```bash
-git commit --allow-empty -m "test: ssh signing"
-git log --show-signature -1    # → Good "git" signature for you@example.com with ED25519 key ...
+git log --show-signature -1                                                 # → Good "git" signature
 ```

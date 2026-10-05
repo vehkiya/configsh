@@ -322,4 +322,7 @@ fi
 # sshx: TUI SSH Connection Manager & Host Adder (native compiled utility: ~/.local/bin/sshx)
 alias fssh="sshx"
 
+# doppel: Git accounts per folder, with their SSH and signing keys (~/.local/bin/doppel)
+alias dop="doppel"
+
 
