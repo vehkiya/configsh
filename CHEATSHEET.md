@@ -122,3 +122,55 @@ Replace your old command-line habits with these faster, modern alternatives:
 | **`./setup.sh`** | [`setup.sh`](setup.sh) | Idempotent setup: verifies tools, creates symlinks, hardens permissions (`700`/`600`), and configures services. |
 | **`./setup.sh --verify`** | [`scripts/doctor.sh`](scripts/doctor.sh) | Read-only health check: checks symlink integrity, Git repo tamper detection, agent sockets, and permissions. |
 | **`~/.zshrc.local`** | Local overrides | Machine-specific private overrides and secrets (untracked by Git, secured at `chmod 600`). |
+
+---
+
+## 🔏 8. Git Commit Signing with SSH Keys
+
+Sign commits and tags with an SSH key instead of GPG, so they show as **Verified** on GitHub/GitLab.
+
+**1. Generate a dedicated signing key.** Always set a passphrase, because `./setup.sh --verify` flags unencrypted keys.
+
+```bash
+ssh-keygen -t ed25519 -C "you@example.com" -f ~/.ssh/id_ed25519_signing
+```
+
+**2. Tell Git to sign with it:**
+
+```bash
+git config --global gpg.format ssh
+git config --global user.signingkey ~/.ssh/id_ed25519_signing.pub
+git config --global commit.gpgsign true
+git config --global tag.gpgsign true
+```
+
+**3. Trust your own key for local verification** (needed for `git log --show-signature`):
+
+```bash
+echo "$(git config user.email) namespaces=\"git\" $(cat ~/.ssh/id_ed25519_signing.pub)" \
+  >> ~/.ssh/allowed_signers
+git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers
+```
+
+**4. Load the key into the agent** so commits don't prompt for the passphrase (KWallet remembers it via `ksshaskpass` on KDE):
+
+```bash
+ssh-add ~/.ssh/id_ed25519_signing                         # Linux
+ssh-add --apple-use-keychain ~/.ssh/id_ed25519_signing    # macOS (Keychain)
+```
+
+**5. Upload the public key as a signing key.** It's registered separately from authentication keys:
+
+```bash
+gh auth refresh -h github.com -s admin:ssh_signing_key    # one-time scope grant
+gh ssh-key add ~/.ssh/id_ed25519_signing.pub --type signing --title "$(hostname) signing"
+```
+
+On GitLab, go to **Preferences → SSH Keys** and set the usage type to **Signing**. For the **Verified** badge, your commit email (`git config user.email`) must also be a verified email on the account.
+
+**6. Verify it works:**
+
+```bash
+git commit --allow-empty -m "test: ssh signing"
+git log --show-signature -1    # → Good "git" signature for you@example.com with ED25519 key ...
+```
