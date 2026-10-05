@@ -21,6 +21,12 @@ info()    { echo -e "${BLUE}==>${RESET} ${BOLD}$1${RESET}"; }
 warn()    { echo -e "${YELLOW}  ⚠${RESET} $1"; }
 alert()   { echo -e "${RED}  ✗${RESET} $1"; }
 
+# True when `docker` is Podman's Docker-compatible shim (podman-docker), which
+# runs rootless and needs no 'docker' group
+docker_is_podman() {
+    docker --version 2>/dev/null | grep -qi podman
+}
+
 MISSING_BREW=()
 MISSING_PACMAN=()
 MISSING_APT=()
@@ -122,7 +128,10 @@ check_optional_tool() {
     elif command -v "$cmd" &>/dev/null; then
         local bin_path
         bin_path="$(command -v "$cmd")"
-        if [ "$cmd" = "docker" ] && [ "$OS" = "Linux" ]; then
+        if [ "$cmd" = "docker" ] && docker_is_podman; then
+            name="Podman (container engine)"
+            bin_path="$bin_path (podman-docker shim)"
+        elif [ "$cmd" = "docker" ] && [ "$OS" = "Linux" ]; then
             if ! getent group docker &>/dev/null || ! id -nG "${USER:-$(whoami)}" 2>/dev/null | grep -qw docker; then
                 bin_path="$bin_path (user not in 'docker' group)"
             fi
@@ -146,6 +155,14 @@ check_optional_tool() {
         return 0
     elif [ "$cmd" = "colima" ] && [ -d "/Applications/Docker.app" ]; then
         add_result "$category" "opt_ok" "Docker Desktop (container runtime VM)" "/Applications/Docker.app"
+        return 0
+    elif [ "$cmd" = "colima" ] && command -v podman &>/dev/null; then
+        local bin_path
+        bin_path="$(command -v podman) machine"
+        if [ -z "$(podman machine list --quiet 2>/dev/null)" ]; then
+            bin_path="$bin_path (no machine yet: podman machine init)"
+        fi
+        add_result "$category" "opt_ok" "Podman Machine (container runtime VM)" "$bin_path"
         return 0
     elif [ "$cmd" = "ghostty" ] && [ -d "/Applications/Ghostty.app" ]; then
         add_result "$category" "opt_ok" "$name" "/Applications/Ghostty.app"
@@ -507,7 +524,7 @@ if [ "$OPT_MISSING" -gt 0 ]; then
     elif [ "$OS" = "Darwin" ]; then
         opt_brew="$(dedup ${OPT_MISSING_BREW[@]+"${OPT_MISSING_BREW[@]}"})"
         [ -n "$opt_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${opt_brew}${RESET}"
-        if ! command -v colima &>/dev/null && [ ! -d "/Applications/OrbStack.app" ] && [ ! -d "/Applications/Docker.app" ]; then
+        if ! command -v colima &>/dev/null && ! command -v podman &>/dev/null && [ ! -d "/Applications/OrbStack.app" ] && [ ! -d "/Applications/Docker.app" ]; then
             echo -e "\n  ${BLUE}↳ Colima recommended startup (Apple Silicon vz + Rosetta):${RESET}"
             echo -e "    ${BOLD}colima start --vm-type=vz --vz-rosetta --cpu 4 --memory 4${RESET}"
         fi
@@ -516,7 +533,7 @@ if [ "$OPT_MISSING" -gt 0 ]; then
 fi
 
 # Remind if Docker is installed on Linux but user is not in 'docker' group
-if [ "$OS" = "Linux" ] && command -v docker &>/dev/null; then
+if [ "$OS" = "Linux" ] && command -v docker &>/dev/null && ! docker_is_podman; then
     if ! getent group docker &>/dev/null || ! id -nG "${USER:-$(whoami)}" 2>/dev/null | grep -qw docker; then
         warn "Docker is installed, but user '${USER:-$(whoami)}' is not in the 'docker' group."
         echo -e "  ${BLUE}↳ Run post-install steps to use Docker without sudo:${RESET}"

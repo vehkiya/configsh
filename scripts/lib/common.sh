@@ -22,6 +22,12 @@ warn()    { echo -e "${YELLOW}  ⚠${RESET} $1"; }
 alert()   { echo -e "${RED}  ✗${RESET} $1"; }
 header()  { echo -e "\n${BOLD}${CYAN}$1${RESET}"; }
 
+# True when `docker` is Podman's Docker-compatible shim (podman-docker), which
+# runs rootless and needs no 'docker' group
+docker_is_podman() {
+    docker --version 2>/dev/null | grep -qi podman
+}
+
 # Pick a backup path that never overwrites an earlier backup
 backup_path() {
     local path="$1" dest="${1}.bak" ts i=1

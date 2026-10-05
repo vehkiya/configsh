@@ -132,8 +132,14 @@ fi
 alias k="kubectl"
 alias kx="kubectx"
 alias kn="kubens"
-alias d="docker"
-alias dc="docker compose"
+# Container aliases fall back to Podman when Docker isn't installed
+if ! command -v docker &>/dev/null && command -v podman &>/dev/null; then
+  alias d="podman"
+  alias dc="podman compose"
+else
+  alias d="docker"
+  alias dc="docker compose"
+fi
 alias v="vault"
 alias b="bao"
 alias p="pass"
