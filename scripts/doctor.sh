@@ -345,7 +345,7 @@ fi
 # -----------------------------------------------------------------------------
 header "[ 8. Native Compiled Utilities ]"
 
-for utility in sshx; do
+for utility in sshx doppel; do
     bin_path="$HOME/.local/bin/$utility"
     if [ -x "$bin_path" ]; then
         pass "Compiled utility: $bin_path"
@@ -353,6 +353,16 @@ for utility in sshx; do
         fail "Missing compiled utility: $bin_path (run ./setup.sh to install)"
     fi
 done
+
+# doppel's own checks: anything that could make Git use the wrong account
+if [ -x "$HOME/.local/bin/doppel" ] && compgen -G "${XDG_CONFIG_HOME:-$HOME/.config}/doppel/accounts/*.gitconfig" >/dev/null; then
+    if "$HOME/.local/bin/doppel" doctor >/dev/null 2>&1; then
+        pass "doppel doctor: no problems with your Git accounts"
+    else
+        fail "doppel doctor found problems with your Git accounts"
+        echo -e "        ${YELLOW}↳ Run: doppel doctor${RESET}"
+    fi
+fi
 
 if [ -d "$DOTFILES_DIR/cmd" ]; then
     for tool_dir in "$DOTFILES_DIR"/cmd/*; do
