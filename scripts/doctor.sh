@@ -312,8 +312,8 @@ if [ "$OS" = "Linux" ]; then
         fi
     fi
 
-    # Linux Docker group check (if Docker is installed)
-    if command -v docker &>/dev/null; then
+    # Linux Docker group check (if Docker is installed; Podman's shim needs no group)
+    if command -v docker &>/dev/null && ! docker_is_podman; then
         if getent group docker &>/dev/null && id -nG "${USER:-$(whoami)}" 2>/dev/null | grep -qw docker; then
             pass "Docker: User ${USER:-$(whoami)} is a member of the 'docker' group"
         else
