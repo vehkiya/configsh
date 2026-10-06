@@ -14,11 +14,18 @@ elif [[ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
 fi
 
-# Tools from 'go install' (GOBIN, else $GOPATH/bin, else ~/go/bin), behind
-# ~/.local/bin below so the tools setup.sh installs there win
-_gobin="${GOBIN:-${GOPATH:-$HOME/go}/bin}"
+# Tools from 'go install': Go puts them in GOBIN, else in the bin folder of the
+# first GOPATH entry (~/go by default). Ask go itself, so settings saved with
+# `go env -w` count too. Behind ~/.local/bin below, so the tools setup.sh
+# installs there win.
+if (( $+commands[go] )); then
+  _goenv=("${(@f)$(go env GOBIN GOPATH 2>/dev/null)}")
+  _gobin="${_goenv[1]:-${${_goenv[2]%%:*}:-$HOME/go}/bin}"
+else
+  _gobin="${GOBIN:-${${GOPATH%%:*}:-$HOME/go}/bin}"
+fi
 [[ -d "$_gobin" ]] && export PATH="$_gobin:$PATH"
-unset _gobin
+unset _goenv _gobin
 
 # User local bin paths (portable across macOS and Linux)
 [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
