@@ -136,7 +136,7 @@ Replace your old command-line habits with these faster, modern alternatives:
 | Command | Description |
 | :--- | :--- |
 | **`dop`** | **Account browser**: accounts beside their details. Edit (<kbd>e</kbd>), add (<kbd>a</kbd>), bind a folder (<kbd>b</kbd>), make default (<kbd>*</kbd>), export (<kbd>x</kbd>), upload (<kbd>u</kbd>), test (<kbd>t</kbd>), delete (<kbd>d</kbd>). |
-| **`dop add`** | Wizard: identity, hosts, folders, auth key (keep, generate, or pick one in `~/.ssh`), signing. <kbd>Shift</kbd>+<kbd>Tab</kbd> goes back, <kbd>Esc</kbd> cancels. The first account can start from your current `~/.gitconfig` identity. |
+| **`dop add`** | Wizard: identity, hosts, folders, auth key (keep, generate, or pick one in `~/.ssh`), signing. <kbd>Tab</kbd> completes folder and key paths, <kbd>Shift</kbd>+<kbd>Tab</kbd> goes back, <kbd>Esc</kbd> cancels. The first account can start from your current `~/.gitconfig` identity. |
 | **`dop whoami [path]`** | Which account applies here, and why, with a live login check against the repo's host. Works on clone targets that don't exist yet. |
 | **`dop bind <id> <folder>`** | Use an account for every repo inside a folder (nested folders: the most specific wins). |
 | **`dop upload <id>`** | Add the account's keys to its GitHub user through `gh` (github.com, GHE.com or Enterprise Server), without switching `gh`'s active account. |
@@ -144,6 +144,8 @@ Replace your old command-line habits with these faster, modern alternatives:
 | **`dop test`** | Log in to each host and sign a test message, as Git would. |
 | **`dop doctor [--fix]`** | Find anything that could make Git use the wrong account. Also part of `./setup.sh --verify`. |
 | **`dop uninstall`** | Take doppel back out of `~/.gitconfig` and `allowed_signers` (accounts and keys are kept). |
+
+<kbd>Tab</kbd> completes `dop` commands, flags, account IDs, bound folders and key files (loaded in `.zshrc`).
 
 **Setting up two accounts:**
 
