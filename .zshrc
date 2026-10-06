@@ -14,6 +14,12 @@ elif [[ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
 fi
 
+# Tools from 'go install' (GOBIN, else $GOPATH/bin, else ~/go/bin), behind
+# ~/.local/bin below so the tools setup.sh installs there win
+_gobin="${GOBIN:-${GOPATH:-$HOME/go}/bin}"
+[[ -d "$_gobin" ]] && export PATH="$_gobin:$PATH"
+unset _gobin
+
 # User local bin paths (portable across macOS and Linux)
 [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
 
