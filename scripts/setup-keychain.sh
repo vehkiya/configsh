@@ -58,9 +58,21 @@ if [ "$OS" = "Linux" ] && command -v systemctl &>/dev/null; then
     fi
 fi
 
-# Ensure AddKeysToAgent is enabled in ~/.ssh/config
+# Make ssh remember unlocked keys for every host: AddKeysToAgent caches them in
+# ssh-agent and, on macOS, UseKeychain keeps their passphrases in the Keychain.
+# macOS has no askpass dialog like ksshaskpass, so without it ssh asks in the
+# terminal again after every login.
 SSH_CONFIG="$HOME/.ssh/config"
 SSH_CONFIG_BACKUP=""
+
+if [ ! -e "$SSH_CONFIG" ] && [ ! -L "$SSH_CONFIG" ]; then
+    mkdir -p "$HOME/.ssh"
+    chmod 700 "$HOME/.ssh"
+    : > "$SSH_CONFIG"
+    chmod 600 "$SSH_CONFIG"
+    SSH_CONFIG_BACKUP="none" # a new file has nothing to back up
+    success "Created ~/.ssh/config"
+fi
 
 # Back up ~/.ssh/config once, before the first change this run makes to it
 backup_ssh_config() {
@@ -71,31 +83,59 @@ backup_ssh_config() {
     fi
 }
 
-if [ -f "$SSH_CONFIG" ]; then
-    if ! grep -Eqi '^[[:space:]]*AddKeysToAgent[[:space:]]' "$SSH_CONFIG" 2>/dev/null; then
-        backup_ssh_config
-        cat <<'EOF' >> "$SSH_CONFIG"
+# What a "Host *" block has to add. A setting found only under some hosts
+# doesn't count; one the user turned off for every host is left alone.
+SSH_MISSING=()
+case "$(ssh_adds_keys_for_all "$SSH_CONFIG")" in
+    "")
+        # ssh can't read the config: only look for the setting
+        grep -Eqi '^[[:space:]]*AddKeysToAgent[[:space:]=]' "$SSH_CONFIG" || SSH_MISSING+=("AddKeysToAgent yes")
+        ;;
+    false|no)
+        case "$(ssh_config_catch_all "$SSH_CONFIG" AddKeysToAgent)" in
+            no|false) warn "Your ~/.ssh/config sets 'AddKeysToAgent no' for every host; leaving it (unlocked keys won't be cached)" ;;
+            *) SSH_MISSING+=("AddKeysToAgent yes") ;;
+        esac
+        ;;
+esac
+if [ "$OS" = "Darwin" ]; then
+    case "$(ssh_config_catch_all "$SSH_CONFIG" UseKeychain)" in
+        yes|true) ;;
+        no|false) warn "Your ~/.ssh/config sets 'UseKeychain no' for every host; leaving it (macOS will ask for SSH passphrases in the terminal)" ;;
+        *) SSH_MISSING+=("UseKeychain yes") ;;
+    esac
+fi
 
-# Automatically cache unlocked keys in ssh-agent
-Host *
-    AddKeysToAgent yes
-EOF
+if [ "${#SSH_MISSING[@]}" -gt 0 ]; then
+    backup_ssh_config
+    {
+        echo ""
         if [ "$OS" = "Darwin" ]; then
-            echo "    UseKeychain yes" >> "$SSH_CONFIG"
+            echo "# Added by configsh: cache unlocked keys in ssh-agent, keep passphrases in the Keychain"
+        else
+            echo "# Added by configsh: cache unlocked keys in ssh-agent"
         fi
-        chmod 600 "$SSH_CONFIG"
-        success "Configured 'AddKeysToAgent yes' in ~/.ssh/config"
-    fi
+        echo "Host *"
+        printf '    %s\n' "${SSH_MISSING[@]}"
+    } >> "$SSH_CONFIG"
+    chmod 600 "$SSH_CONFIG"
+    for setting in "${SSH_MISSING[@]}"; do
+        success "Configured '$setting' for every host in ~/.ssh/config"
+    done
+fi
 
-    # UseKeychain is Apple-only: non-Apple OpenSSH (e.g. Homebrew's) rejects the
-    # whole config unless it's told to ignore it before the option appears
-    if grep -Eqi '^[[:space:]]*UseKeychain[[:space:]]' "$SSH_CONFIG" &&
-       ! grep -Eqi '^[[:space:]]*IgnoreUnknown[[:space:]].*UseKeychain' "$SSH_CONFIG"; then
-        backup_ssh_config
-        SSH_CONFIG_TMP="$(mktemp "${SSH_CONFIG}.XXXXXX")"
-        { echo "IgnoreUnknown UseKeychain"; cat "$SSH_CONFIG"; } > "$SSH_CONFIG_TMP"
-        replace_file "$SSH_CONFIG_TMP" "$SSH_CONFIG"
-        chmod 600 "$SSH_CONFIG"
-        success "Added 'IgnoreUnknown UseKeychain' to the top of ~/.ssh/config"
-    fi
+# UseKeychain is Apple-only: non-Apple OpenSSH (e.g. Homebrew's) rejects the
+# whole config unless it's told to ignore it before the option appears
+if grep -Eqi '^[[:space:]]*UseKeychain[[:space:]=]' "$SSH_CONFIG" &&
+   ! grep -Eqi '^[[:space:]]*IgnoreUnknown[[:space:]=].*UseKeychain' "$SSH_CONFIG"; then
+    backup_ssh_config
+    SSH_CONFIG_TMP="$(mktemp "${SSH_CONFIG}.XXXXXX")"
+    { echo "IgnoreUnknown UseKeychain"; cat "$SSH_CONFIG"; } > "$SSH_CONFIG_TMP"
+    replace_file "$SSH_CONFIG_TMP" "$SSH_CONFIG"
+    chmod 600 "$SSH_CONFIG"
+    success "Added 'IgnoreUnknown UseKeychain' to the top of ~/.ssh/config"
+fi
+
+if [ "$OS" = "Darwin" ] && ! ssh_is_apple; then
+    warn "ssh ($(command -v ssh)) isn't Apple's, so it can't keep passphrases in the Keychain; put /usr/bin ahead of it on PATH"
 fi

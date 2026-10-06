@@ -288,14 +288,39 @@ if command -v ssh-add &>/dev/null; then
     fi
 fi
 
-if [ -f "$HOME/.ssh/config" ]; then
-    add_keys="$(grep -Ei '^[[:space:]]*AddKeysToAgent[[:space:]]' "$HOME/.ssh/config" 2>/dev/null | head -n 1 | awk '{print tolower($2)}' || true)"
+SSH_CONFIG="$HOME/.ssh/config"
+if [ ! -f "$SSH_CONFIG" ]; then
+    fail "SSH Config: ~/.ssh/config is missing, so ssh doesn't cache unlocked keys"
+    echo -e "        ${YELLOW}↳ Remediation: ./setup.sh${RESET}"
+else
+    # As ssh applies it to every host, so a setting under one host doesn't count
+    add_keys="$(ssh_adds_keys_for_all "$SSH_CONFIG" || true)"
     if [ -z "$add_keys" ]; then
-        fail "~/.ssh/config: 'AddKeysToAgent yes' missing"
-    elif [ "$add_keys" = "no" ]; then
-        doctor_warn "~/.ssh/config: AddKeysToAgent is set to 'no' (unlocked keys won't be cached)"
+        fail "SSH Config: ssh can't read ~/.ssh/config"
+        echo -e "        ${YELLOW}↳ Remediation: ssh -G github.com shows the error${RESET}"
+    elif [ "$add_keys" = "false" ] || [ "$add_keys" = "no" ]; then
+        case "$(ssh_config_catch_all "$SSH_CONFIG" AddKeysToAgent)" in
+            no|false) doctor_warn "SSH Config: AddKeysToAgent is set to 'no' (unlocked keys won't be cached)" ;;
+            *) fail "SSH Config: 'AddKeysToAgent yes' missing for every host (Host *)"
+               echo -e "        ${YELLOW}↳ Remediation: ./setup.sh${RESET}" ;;
+        esac
     else
-        pass "~/.ssh/config: 'AddKeysToAgent $add_keys' configured"
+        pass "SSH Config: 'AddKeysToAgent $add_keys' for every host"
+    fi
+
+    if [ "$OS" = "Darwin" ]; then
+        if ssh_is_apple; then
+            pass "ssh: Apple's, so it can keep passphrases in the Keychain"
+        else
+            doctor_warn "ssh: $(command -v ssh) isn't Apple's, so it can't keep passphrases in the Keychain"
+            echo -e "        ${YELLOW}↳ Remediation: put /usr/bin ahead of it on PATH${RESET}"
+        fi
+        case "$(ssh_config_catch_all "$SSH_CONFIG" UseKeychain || true)" in
+            yes|true) pass "SSH Config: 'UseKeychain yes' for every host" ;;
+            no|false) doctor_warn "SSH Config: UseKeychain is set to 'no' (macOS asks for SSH passphrases in the terminal)" ;;
+            *) fail "SSH Config: 'UseKeychain yes' missing for every host, so macOS asks for SSH passphrases in the terminal"
+               echo -e "        ${YELLOW}↳ Remediation: ./setup.sh${RESET}" ;;
+        esac
     fi
 fi
 

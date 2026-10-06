@@ -113,7 +113,7 @@ Replace your old command-line habits with these faster, modern alternatives:
 | **Ghost Suggestions** | <kbd>→</kbd> or <kbd>End</kbd> | `zsh-autosuggestions` predicts commands based on history; tap Right Arrow to accept. |
 | **Syntax Highlighting** | Real-time | `zsh-syntax-highlighting` marks valid commands **green** and mistyped/invalid commands **red**. |
 | **Git Auto Fetch** | Background (every 30m) | Silently runs `git fetch` on repos in the background so prompt ahead/behind markers (`⇡1 ⇣2`) stay current. |
-| **SSH Key Agent** | Automatic | Private keys are auto-cached on first use via `AddKeysToAgent yes`. |
+| **SSH Key Agent** | Automatic | Private keys are auto-cached on first use via `AddKeysToAgent yes`. On macOS, passphrases stay in the Keychain (`UseKeychain yes`) and keys reload into the agent after each login. |
 | **Ghostty (Optional)** | Terminal Emulator | Configured with Gruvbox Dark aesthetic, 12px padding, and Wayland/macOS support. Applied conditionally only if installed. |
 | **Starship** | Shell Prompt | Fast Powerline prompt with directory icons and duration tracking for commands taking $>2$s. |
 

@@ -115,6 +115,16 @@ if [[ -n "$DISPLAY" || -n "$WAYLAND_DISPLAY" ]]; then
   fi
 fi
 
+# macOS Keychain: the agent starts empty after each login, and Git signing only
+# uses keys in the agent. Load the keys whose passphrases are in the Keychain
+# (saved by ssh with UseKeychain yes, or ssh-add --apple-use-keychain) the first
+# time a shell finds it empty: ssh-add -l exits 1 for an agent with no keys.
+# Apple's ssh-add only; Homebrew's has no Keychain support.
+if [[ "$(uname)" == "Darwin" && -z "$SSH_CONNECTION" && -x /usr/bin/ssh-add ]]; then
+  /usr/bin/ssh-add -l &>/dev/null
+  (( $? == 1 )) && /usr/bin/ssh-add --apple-load-keychain -q &>/dev/null
+fi
+
 # Editor configuration
 if [[ -n "$SSH_CONNECTION" ]]; then
   export EDITOR="vim"
