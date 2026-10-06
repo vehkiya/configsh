@@ -347,5 +347,11 @@ alias fssh="sshx"
 
 # doppel: Git accounts per folder, with their SSH and signing keys (~/.local/bin/doppel)
 alias dop="doppel"
+# Completion for doppel and dop: commands, flags, account IDs, folders and
+# keys. Needs compinit (run by Oh My Zsh above); an older doppel without the
+# completion command prints nothing here.
+if (( $+commands[doppel] && $+functions[compdef] )); then
+  source <(doppel completion zsh 2>/dev/null)
+fi
 
 
