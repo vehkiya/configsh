@@ -116,9 +116,9 @@ Never get repeatedly prompted in the terminal for GPG or SSH passphrases:
   * Offers a **"Save in password manager / Keychain"** checkbox so passphrases only need to be entered once.
   * Falls back to `pinentry-curses` in headless, remote SSH, or pure TTY sessions.
 * **SSH & Git Signing (`~/.ssh/config`)**:
-  * `AddKeysToAgent yes` automatically caches unlocked private keys in `ssh-agent`.
+  * `AddKeysToAgent yes` (for every host) automatically caches unlocked private keys in `ssh-agent`. `~/.ssh/config` is created if it doesn't exist.
   * On Linux (KDE), `ksshaskpass` provides a native KWallet prompt to remember SSH passphrases.
-  * On macOS, `UseKeychain yes` remembers keys in Apple Keychain.
+  * On macOS, `UseKeychain yes` keeps SSH passphrases in the Keychain, so ssh asks for each one only once. The agent starts empty after every login, so the first shell reloads the saved keys into it (`ssh-add --apple-load-keychain`) and Git signing doesn't ask either. This needs Apple's `/usr/bin/ssh`: Homebrew's OpenSSH has no Keychain support, and `doctor.sh` warns when it comes first on `PATH`.
 
 ---
 

@@ -14,6 +14,19 @@ elif [[ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv zsh)"
 fi
 
+# Tools from 'go install': Go puts them in GOBIN, else in the bin folder of the
+# first GOPATH entry (~/go by default). Ask go itself, so settings saved with
+# `go env -w` count too. Behind ~/.local/bin below, so the tools setup.sh
+# installs there win.
+if (( $+commands[go] )); then
+  _goenv=("${(@f)$(go env GOBIN GOPATH 2>/dev/null)}")
+  _gobin="${_goenv[1]:-${${_goenv[2]%%:*}:-$HOME/go}/bin}"
+else
+  _gobin="${GOBIN:-${${GOPATH%%:*}:-$HOME/go}/bin}"
+fi
+[[ -d "$_gobin" ]] && export PATH="$_gobin:$PATH"
+unset _goenv _gobin
+
 # User local bin paths (portable across macOS and Linux)
 [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"
 
@@ -107,6 +120,16 @@ if [[ -n "$DISPLAY" || -n "$WAYLAND_DISPLAY" ]]; then
     export SSH_ASKPASS="$(command -v ksshaskpass)"
     export SSH_ASKPASS_REQUIRE="prefer"
   fi
+fi
+
+# macOS Keychain: the agent starts empty after each login, and Git signing only
+# uses keys in the agent. Load the keys whose passphrases are in the Keychain
+# (saved by ssh with UseKeychain yes, or ssh-add --apple-use-keychain) the first
+# time a shell finds it empty: ssh-add -l exits 1 for an agent with no keys.
+# Apple's ssh-add only; Homebrew's has no Keychain support.
+if [[ "$(uname)" == "Darwin" && -z "$SSH_CONNECTION" && -x /usr/bin/ssh-add ]]; then
+  /usr/bin/ssh-add -l &>/dev/null
+  (( $? == 1 )) && /usr/bin/ssh-add --apple-load-keychain -q &>/dev/null
 fi
 
 # Editor configuration

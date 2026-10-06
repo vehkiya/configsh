@@ -84,6 +84,47 @@ ssh_key_protection() {
     fi
 }
 
+# Print how ssh sets AddKeysToAgent for every host ("true", "false", "ask",
+# "confirm", ...): ssh -G on a host no entry names, so Include, Match and
+# wildcards count as ssh counts them, and nothing connects. Prints nothing when
+# ssh can't read the config. IgnoreUnknown keeps a non-Apple ssh from refusing
+# a config that has UseKeychain.
+ssh_adds_keys_for_all() {
+    ssh -G -F "$1" -o IgnoreUnknown=UseKeychain configsh-no-such-host.invalid 2>/dev/null |
+        awk '$1 == "addkeystoagent" { $1 = ""; sub(/^ /, ""); print; exit }'
+}
+
+# Print the value (lowercased) an ssh config sets for keyword where it applies
+# to every host: before the first Host or Match line, or under "Host *" or
+# "Match all". Prints nothing otherwise. For settings ssh -G doesn't print,
+# such as Apple's UseKeychain; Include isn't followed.
+ssh_config_catch_all() {
+    [ -f "$1" ] || return 0
+    awk -v kw="$(printf '%s' "$2" | tr '[:upper:]' '[:lower:]')" '
+        {
+            line = $0
+            sub(/^[ \t]+/, "", line)
+            if (line == "" || line ~ /^#/) next
+            gsub(/"/, "", line)
+            n = split(line, f, /[ \t=]+/)
+            key = tolower(f[1])
+        }
+        key == "host" {
+            scoped = 1; all = 0
+            for (i = 2; i <= n; i++) if (f[i] == "*") all = 1
+            next
+        }
+        key == "match" { scoped = 1; all = (tolower(f[2]) == "all"); next }
+        key == kw && (!scoped || all) { print tolower(f[2]); exit }
+    ' "$1"
+}
+
+# True when the ssh on PATH is Apple's, the only one that can keep passphrases
+# in the macOS Keychain: other builds (Homebrew's) refuse the UseKeychain option
+ssh_is_apple() {
+    ssh -G -F /dev/null -o UseKeychain=yes configsh-no-such-host.invalid >/dev/null 2>&1
+}
+
 # Parse common flags (-y / --yes)
 ASSUME_YES="${ASSUME_YES:-false}"
 for arg in "$@"; do
