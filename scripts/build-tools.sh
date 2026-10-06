@@ -83,17 +83,37 @@ install_tool() {
     fi
 }
 
-# -----------------------------------------------------------------------------
-# 1. Install sshx (https://github.com/vehkiya/sshx), the SSH host manager.
-# Set SSHX_VERSION (e.g. v0.5.0) to pin a release instead of tracking latest.
-# -----------------------------------------------------------------------------
-install_tool sshx "${SSHX_VERSION:-latest}"
+# update_or_install_tool NAME VERSION: when NAME is already installed and
+# VERSION is "latest", lets it update itself with `NAME update`, which installs
+# the latest signed release. A pinned VERSION, a missing binary, or a failed
+# update goes through install_tool instead.
+update_or_install_tool() {
+    local name="$1" version="$2" bin="$BIN_DIR/$1"
+
+    # Only call update on a build whose help lists it: an sshx without the
+    # command would take "update" for a host alias and try to connect to it.
+    if [ "$version" = "latest" ] && [ -x "$bin" ] && "$bin" --help 2>&1 | grep -qE '^ +'"$name"' update'; then
+        info "Updating $name via $name update..."
+        if "$bin" update; then
+            success "$name is on the latest release"
+            return 0
+        fi
+        warn "$name update failed, reinstalling instead..."
+    fi
+    install_tool "$name" "$version"
+}
 
 # -----------------------------------------------------------------------------
-# 2. Install doppel (https://github.com/vehkiya/doppel), Git accounts per folder.
+# 1. Install or update sshx (https://github.com/vehkiya/sshx), the SSH host manager.
+# Set SSHX_VERSION (e.g. v0.5.0) to pin a release instead of tracking latest.
+# -----------------------------------------------------------------------------
+update_or_install_tool sshx "${SSHX_VERSION:-latest}"
+
+# -----------------------------------------------------------------------------
+# 2. Install or update doppel (https://github.com/vehkiya/doppel), Git accounts per folder.
 # Set DOPPEL_VERSION (e.g. v0.5.0) to pin a release instead of tracking latest.
 # -----------------------------------------------------------------------------
-install_tool doppel "${DOPPEL_VERSION:-latest}"
+update_or_install_tool doppel "${DOPPEL_VERSION:-latest}"
 
 # -----------------------------------------------------------------------------
 # 3. Build any custom dotfiles utilities in cmd/ (if present)
