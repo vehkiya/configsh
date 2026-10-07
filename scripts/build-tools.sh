@@ -83,23 +83,23 @@ install_tool() {
     fi
 }
 
-# update_or_install_tool NAME VERSION: when NAME is already installed and
-# VERSION is "latest", lets it update itself with `NAME update`, which installs
-# the latest signed release. A pinned VERSION, a missing binary, or a failed
-# update goes through install_tool instead.
+# update_or_install_tool NAME VERSION: installs github.com/vehkiya/NAME
+# into $BIN_DIR if it is not already installed. If it is already installed,
+# runs its self-update command (`NAME update`) instead.
 update_or_install_tool() {
     local name="$1" version="$2" bin="$BIN_DIR/$1"
 
-    # Only call update on a build whose help lists it: an sshx without the
-    # command would take "update" for a host alias and try to connect to it.
-    if [ "$version" = "latest" ] && [ -x "$bin" ] && "$bin" --help 2>&1 | grep -qE '^ +'"$name"' update'; then
+    if [ -x "$bin" ] || command -v "$name" &>/dev/null; then
+        [ -x "$bin" ] || bin="$(command -v "$name")"
         info "Updating $name via $name update..."
         if "$bin" update; then
             success "$name is on the latest release"
-            return 0
+        else
+            warn "$name update failed"
         fi
-        warn "$name update failed, reinstalling instead..."
+        return 0
     fi
+
     install_tool "$name" "$version"
 }
 
