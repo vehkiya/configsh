@@ -28,6 +28,10 @@ font-feature = ["calt", "liga", "dlig", "zero"]
 # =============================================================================
 # Window Configuration
 # =============================================================================
+# Initial default window dimensions (columns x rows)
+window-width = 120
+window-height = 40
+
 # Inner breathing room around Starship's Powerline capsules ( ... )
 window-padding-x = 14
 window-padding-y = 12
