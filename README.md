@@ -34,7 +34,7 @@ source ~/.zshrc
 * **[Ghostty](.config/ghostty/config.ghostty)** *(Optional - applied automatically only if installed)*:
   * Warm Gruvbox Dark aesthetic matching Starship.
   * JetBrainsMono Nerd Font with programming ligatures (`calt`, `liga`, `dlig`) and slashed zero (`zero`).
-  * Frosted glass background blur (KDE Wayland / macOS) with 90% opacity and balanced window padding.
+  * Frosted glass background blur (KDE Wayland / macOS) with 80% opacity and balanced window padding.
   * Native shell integration with OSC 133 prompt markers.
   * Integrated tab titlebar (`gtk-titlebar-style = tabs`) and unfocused split dimming.
   * Ergonomic macOS Option key mapping (`macos-option-as-alt = left`, preserving Right Option for accents/symbols).
