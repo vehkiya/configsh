@@ -33,10 +33,15 @@ source ~/.zshrc
 
 * **[Ghostty](.config/ghostty/config.ghostty)** *(Optional - applied automatically only if installed)*:
   * Warm Gruvbox Dark aesthetic matching Starship.
-  * Balanced window padding (12px) for Powerline capsules.
+  * JetBrainsMono Nerd Font with programming ligatures (`calt`, `liga`, `dlig`) and slashed zero (`zero`).
+  * Frosted glass background blur (KDE Wayland / macOS) with 90% opacity and balanced window padding.
   * Native shell integration with OSC 133 prompt markers.
+  * Integrated tab titlebar (`gtk-titlebar-style = tabs`) and unfocused split dimming.
   * Ergonomic macOS Option key mapping (`macos-option-as-alt = left`, preserving Right Option for accents/symbols).
   * Systemd drop-in override for Linux to avoid `Type=notify-reload` race conditions.
+* **[Fastfetch](.config/fastfetch/config.jsonc)**:
+  * Minimal, high-aesthetic system information banner with Gruvbox-accented palette.
+  * Automatically detects and formats OS, kernel, uptime, terminal, shell, CPU, GPU, memory, and disk specs.
 * **[Starship](.config/starship.toml)**:
   * Fast, segmented Powerline prompt with pill capsules (`` ... ``).
   * Integrated command duration tracking (`$cmd_duration` for commands taking > 2s).
@@ -46,7 +51,7 @@ source ~/.zshrc
   * Multi-architecture Homebrew support (Apple Silicon `/opt/homebrew`, Intel Mac `/usr/local`, Linux `/home/linuxbrew`).
   * OS-conditional Oh My Zsh plugins (`macos` on Darwin, `archlinux` on Arch).
   * Defensive tool initializations (`eza`, `fnm`, `fzf`, `direnv`, `starship`, `zoxide`, `yazi`).
-  * Modern tab completion via **`fzf-tab`** with live previews (`eza` for directories, `bat` for files).
+  * Modern tab completion via **`fzf-tab`** and fuzzy picker (`fzf`) with Gruvbox dark styling and live previews (`eza` for directories, `bat` for files).
   * Interactive text search via **`fif`** (`ripgrep` + `fzf` + `bat` preview with direct editor jumping).
   * Interactive cheatsheet via **`cs`** / **`cheatsheet`** (terminal markdown reader with `glow`).
   * TUI SSH connection manager via **`sshx`** (`fssh` / `sshx add`: Bubble Tea host browser, Huh adder wizard, key discovery, `ssh-copy-id`).

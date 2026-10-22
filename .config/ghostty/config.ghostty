@@ -4,31 +4,50 @@
 # Matched to starship.toml's Gruvbox Dark palette (change to 'Ayu Mirage' if preferred)
 theme = "Gruvbox Dark"
 
-# Background transparency (0.9 = 90% opaque / 10% transparent)
-background-opacity = 0.9
+# Background transparency (0.90 = 90% opaque / 10% transparent)
+background-opacity = 0.90
 
-# Frosted glass blur effect behind the window (macOS and supported Linux compositors)
-background-blur-radius = 20
+# Frosted glass blur effect behind the window (KDE Plasma Wayland and macOS)
+background-blur = 20
+
+# Force dark window chrome / client decoration theme variant
+window-theme = dark
 
 # =============================================================================
 # Fonts & Typography
 # =============================================================================
-font-family = "JetBrains Mono"
+font-family = "JetBrainsMono Nerd Font"
 font-size = 14
+
+# OpenType Font Features:
+#   calt, liga : Standard programming ligatures (e.g. !=, ===, =>, ->)
+#   dlig       : Discretionary ligatures
+#   zero       : Slashed zero to distinctly differentiate '0' from 'O'
+font-feature = ["calt", "liga", "dlig", "zero"]
 
 # =============================================================================
 # Window Configuration
 # =============================================================================
-# Adds breathing room around Starship's Powerline capsules ( ... )
-window-padding-x = 12
+# Inner breathing room around Starship's Powerline capsules ( ... )
+window-padding-x = 14
 window-padding-y = 12
 window-padding-balance = true
+window-padding-color = background
+
+# Linux / GTK titlebar and tab integration:
+# 'tabs' merges the tab bar into the titlebar to maximize vertical screen area
+gtk-titlebar-style = tabs
+gtk-wide-tabs = true
+
+# Dim inactive split panes for immediate visual focus
+unfocused-split-opacity = 0.70
 
 # =============================================================================
 # Cursor & Mouse
 # =============================================================================
 cursor-style = bar
 cursor-style-blink = true
+cursor-click-to-move = true
 mouse-hide-while-typing = true
 
 # =============================================================================
