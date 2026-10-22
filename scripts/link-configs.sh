@@ -233,7 +233,6 @@ fi
 
 # Link Ghostty config (only if Ghostty is installed or previously configured)
 if command -v ghostty &>/dev/null || [ -d "/Applications/Ghostty.app" ] || [ -f "/usr/lib/systemd/user/app-com.mitchellh.ghostty.service" ] || [ -L "$HOME/.config/ghostty/config" ]; then
-    link_file "$DOTFILES_DIR/.config/ghostty/config.ghostty" "$HOME/.config/ghostty/config.ghostty"
     link_file "$DOTFILES_DIR/.config/ghostty/config" "$HOME/.config/ghostty/config"
 
     # macOS Ghostty alternative location support

@@ -122,7 +122,6 @@ if [ -f "$DOTFILES_DIR/.config/fastfetch/config.jsonc" ]; then
 fi
 # Ghostty config check (optional)
 if command -v ghostty &>/dev/null || [ -d "/Applications/Ghostty.app" ] || [ -f "/usr/lib/systemd/user/app-com.mitchellh.ghostty.service" ] || [ -L "$HOME/.config/ghostty/config" ]; then
-    check_symlink "$DOTFILES_DIR/.config/ghostty/config.ghostty" "$HOME/.config/ghostty/config.ghostty"
     check_symlink "$DOTFILES_DIR/.config/ghostty/config" "$HOME/.config/ghostty/config"
 
     if [ "$OS" = "Darwin" ]; then

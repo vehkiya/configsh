@@ -23,7 +23,10 @@ font-size = 14
 #   calt, liga : Standard programming ligatures (e.g. !=, ===, =>, ->)
 #   dlig       : Discretionary ligatures
 #   zero       : Slashed zero to distinctly differentiate '0' from 'O'
-font-feature = ["calt", "liga", "dlig", "zero"]
+font-feature = calt
+font-feature = liga
+font-feature = dlig
+font-feature = zero
 
 # =============================================================================
 # Window Configuration
@@ -31,6 +34,11 @@ font-feature = ["calt", "liga", "dlig", "zero"]
 # Initial default window dimensions (columns x rows)
 window-width = 120
 window-height = 40
+
+# Window decoration style:
+# 'client' tells KDE Plasma / KWin not to draw server-side decorations, omitting
+# the KDE titlebar in favor of Ghostty's integrated tabs titlebar.
+window-decoration = client
 
 # Inner breathing room around Starship's Powerline capsules ( ... )
 window-padding-x = 14
