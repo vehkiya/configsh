@@ -40,14 +40,7 @@ doctor_info() {
     echo -e "    ${BLUE}ℹ️${RESET}  $1"
 }
 
-get_perm() {
-    local target="$1"
-    if [ "$OS" = "Darwin" ]; then
-        stat -f %Lp "$target" 2>/dev/null || echo ""
-    else
-        stat -c %a "$target" 2>/dev/null || echo ""
-    fi
-}
+WSL_METADATA_REMEDIATION="↳ Remediation: keep it on the Linux filesystem, or add options = \"metadata\" under [automount] in /etc/wsl.conf and run 'wsl --shutdown'"
 
 # -----------------------------------------------------------------------------
 # 1. Git Repository & Integrity Check
@@ -132,13 +125,15 @@ if [ -f "$DOTFILES_DIR/.config/fastfetch/config.jsonc" ]; then
     fi
 fi
 # Ghostty config check (optional)
-if command -v ghostty &>/dev/null || [ -d "/Applications/Ghostty.app" ] || [ -f "/usr/lib/systemd/user/app-com.mitchellh.ghostty.service" ] || [ -L "$HOME/.config/ghostty/config" ]; then
+if has_ghostty || [ -L "$HOME/.config/ghostty/config" ]; then
     check_symlink "$DOTFILES_DIR/.config/ghostty/config" "$HOME/.config/ghostty/config"
 
     if [ "$OS" = "Darwin" ]; then
         GHOSTTY_MAC_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
         check_symlink "$DOTFILES_DIR/.config/ghostty/config" "$GHOSTTY_MAC_DIR/config"
     fi
+elif is_wsl; then
+    doctor_info "Ghostty: Skipped (running in WSL; Windows host terminal used)"
 else
     doctor_info "Ghostty: Not installed (optional; config symlink skipped)"
 fi
@@ -201,6 +196,9 @@ for dir in "${SECRET_DIRS[@]}"; do
         perm="$(get_perm "$dir")"
         if [ "$perm" = "700" ]; then
             pass "$dir (chmod 700)"
+        elif windows_fs_ignores_chmod "$dir"; then
+            doctor_warn "$dir has permissions $perm on a Windows drive mounted without 'metadata', so chmod can't restrict it (only Windows ACLs protect it)"
+            echo -e "        ${YELLOW}${WSL_METADATA_REMEDIATION}${RESET}"
         else
             fail "$dir has permissions $perm (expected 700)"
         fi
@@ -226,7 +224,7 @@ SECRET_FILES=(
 if [ -d "$HOME/.ssh" ]; then
     while IFS= read -r key; do
         SECRET_FILES+=("$key")
-    done < <(find "$HOME/.ssh" -maxdepth 1 -type f ! -name "*.pub" ! -name "known_hosts*" ! -name "authorized_keys*" ! -name "allowed_signers*" 2>/dev/null || true)
+    done < <(find -H "$HOME/.ssh" -maxdepth 1 -type f ! -name "*.pub" ! -name "known_hosts*" ! -name "authorized_keys*" ! -name "allowed_signers*" 2>/dev/null || true)
 fi
 
 for file in "${SECRET_FILES[@]}"; do
@@ -234,6 +232,14 @@ for file in "${SECRET_FILES[@]}"; do
         perm="$(get_perm "$file")"
         if [ "$perm" = "600" ]; then
             pass "$file (chmod 600)"
+        elif windows_fs_ignores_chmod "$file"; then
+            # ssh refuses keys and configs others can read or write
+            # ("UNPROTECTED PRIVATE KEY FILE", "Bad owner or permissions")
+            case "$file" in
+                "$HOME/.ssh/"*) fail "$file has permissions $perm on a Windows drive mounted without 'metadata', so ssh refuses it" ;;
+                *) doctor_warn "$file has permissions $perm on a Windows drive mounted without 'metadata', so chmod can't restrict it (only Windows ACLs protect it)" ;;
+            esac
+            echo -e "        ${YELLOW}${WSL_METADATA_REMEDIATION}${RESET}"
         else
             fail "$file has permissions $perm (expected 600)"
         fi
@@ -352,7 +358,7 @@ fi
 
 # Linux Ghostty override check (if Ghostty is installed)
 if [ "$OS" = "Linux" ]; then
-    if command -v ghostty &>/dev/null || [ -f "/usr/lib/systemd/user/app-com.mitchellh.ghostty.service" ]; then
+    if has_ghostty; then
         GHOSTTY_OVERRIDE="$HOME/.config/systemd/user/app-com.mitchellh.ghostty.service.d/override.conf"
         if [ -f "$GHOSTTY_OVERRIDE" ]; then
             if grep -q "Type=notify" "$GHOSTTY_OVERRIDE" 2>/dev/null; then

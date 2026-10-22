@@ -232,7 +232,7 @@ if command -v fastfetch &>/dev/null || [ -f "$DOTFILES_DIR/.config/fastfetch/con
 fi
 
 # Link Ghostty config (only if Ghostty is installed or previously configured)
-if command -v ghostty &>/dev/null || [ -d "/Applications/Ghostty.app" ] || [ -f "/usr/lib/systemd/user/app-com.mitchellh.ghostty.service" ] || [ -L "$HOME/.config/ghostty/config" ]; then
+if has_ghostty || [ -L "$HOME/.config/ghostty/config" ]; then
     link_file "$DOTFILES_DIR/.config/ghostty/config" "$HOME/.config/ghostty/config"
 
     # macOS Ghostty alternative location support
@@ -241,6 +241,8 @@ if command -v ghostty &>/dev/null || [ -d "/Applications/Ghostty.app" ] || [ -f 
         mkdir -p "$GHOSTTY_MAC_DIR"
         link_file "$DOTFILES_DIR/.config/ghostty/config" "$GHOSTTY_MAC_DIR/config"
     fi
+elif is_wsl; then
+    success "WSL environment detected (host terminal used); skipping Ghostty configuration symlinks."
 else
     success "Ghostty not installed; skipping Ghostty configuration symlinks."
 fi
