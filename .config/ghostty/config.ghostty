@@ -4,8 +4,8 @@
 # Matched to starship.toml's Gruvbox Dark palette (change to 'Ayu Mirage' if preferred)
 theme = "Gruvbox Dark"
 
-# Background transparency (0.80 = 80% opaque / 20% transparent for distinct frosted glass)
-background-opacity = 0.80
+# Background transparency (0.75 = 75% opaque / 25% transparent for richer frosted glass)
+background-opacity = 0.75
 
 # Frosted glass blur effect behind the window (KDE Plasma Wayland and macOS)
 background-blur = true
