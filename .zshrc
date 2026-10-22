@@ -147,9 +147,12 @@ fi
 if command -v eza &>/dev/null; then
   alias ls="eza --icons --group-directories-first"
   alias ll="eza -al --icons --group-directories-first --git"
+  alias la="eza -a --icons --group-directories-first"
+  alias lt="eza --tree --level=2 --icons --group-directories-first"
 else
   alias ls="ls --color=auto"
   alias ll="ls -la"
+  alias la="ls -A"
 fi
 
 alias k="kubectl"
@@ -186,6 +189,13 @@ fi
 # Tool initializations (graceful execution if installed)
 command -v fnm &>/dev/null && eval "$(fnm env --use-on-cd 2>/dev/null || fnm env)"
 if command -v fzf &>/dev/null; then
+  # Gruvbox Dark theme and floating UI for fzf
+  export FZF_DEFAULT_OPTS=" \
+    --color=bg+:#3c3836,bg:#282828,spinner:#b8bb26,hl:#fabd2f \
+    --color=fg:#ebdbb2,header:#fb4934,info:#b8bb26,pointer:#fe8019 \
+    --color=marker:#fabd2f,fg+:#fbf1c7,prompt:#fb4934,hl+:#fe8019 \
+    --height=60% --layout=reverse --border --prompt='󰍉 ' --pointer='▶' --marker='✔ '"
+
   if _fzf_init="$(fzf --zsh 2>/dev/null)"; then
     eval "$_fzf_init"
     unset _fzf_init
@@ -257,6 +267,7 @@ fi
 if ! command -v bat &>/dev/null && command -v batcat &>/dev/null; then
   alias bat="batcat"
 fi
+export BAT_THEME="gruvbox-dark"
 
 # Fzf-Tab completion styling & rich previews (eza for dirs, bat for files)
 if [[ " ${plugins[*]} " =~ " fzf-tab " ]]; then
@@ -353,5 +364,14 @@ alias dop="doppel"
 if (( $+commands[doppel] && $+functions[compdef] )); then
   source <(doppel completion zsh 2>/dev/null)
 fi
+
+# Fastfetch welcome banner (interactive top-level sessions only)
+if [[ -o interactive ]] && command -v fastfetch &>/dev/null; then
+  if [[ -z "$FASTFETCH_SHOWN" && -z "$VIM" && -z "$NVIM" && "$TERM" != "dumb" ]]; then
+    export FASTFETCH_SHOWN=1
+    fastfetch
+  fi
+fi
+
 
 

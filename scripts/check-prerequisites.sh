@@ -375,6 +375,7 @@ check_optional_tool "Text Search & Inspection (Optional)" "glow" "Glow (terminal
 # -----------------------------------------------------------------------------
 check_optional_tool "Terminal Emulators & File Managers (Optional)" "ghostty" "Ghostty (terminal emulator)" "ghostty" "ghostty" ""
 check_optional_tool "Terminal Emulators & File Managers (Optional)" "yazi" "Yazi (terminal file manager)" "yazi" "yazi" ""
+check_optional_tool "Terminal Emulators & File Managers (Optional)" "fastfetch" "Fastfetch (system information banner)" "fastfetch" "fastfetch" "fastfetch"
 
 # -----------------------------------------------------------------------------
 # Print Formatted Prerequisites Summary
