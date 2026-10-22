@@ -241,6 +241,8 @@ if command -v ghostty &>/dev/null || [ -d "/Applications/Ghostty.app" ] || [ -f 
         mkdir -p "$GHOSTTY_MAC_DIR"
         link_file "$DOTFILES_DIR/.config/ghostty/config" "$GHOSTTY_MAC_DIR/config"
     fi
+elif is_wsl; then
+    success "WSL environment detected (host terminal used); skipping Ghostty configuration symlinks."
 else
     success "Ghostty not installed; skipping Ghostty configuration symlinks."
 fi

@@ -28,6 +28,11 @@ docker_is_podman() {
     docker --version 2>/dev/null | grep -qi podman
 }
 
+# True when running inside Windows Subsystem for Linux (WSL)
+is_wsl() {
+    [ -n "${WSL_DISTRO_NAME:-}" ] || [ -n "${WSL_INTEROP:-}" ] || grep -qi -e 'microsoft' -e 'wsl' /proc/version 2>/dev/null
+}
+
 # Pick a backup path that never overwrites an earlier backup
 backup_path() {
     local path="$1" dest="${1}.bak" ts i=1

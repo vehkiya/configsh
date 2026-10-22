@@ -15,11 +15,11 @@
 ## Setup Modes & Package Tiers
 - **`minimal`**: Base shell (`git`, `zsh`, `curl`), Oh My Zsh + essential plugins, editor, security hardening (`chmod 700`/`600`), SSH key audit.
 - **`required`**: Default daily driver setup (`minimal` + `starship`, `eza`, `fzf`, `zoxide`, `direnv`, `ripgrep`, `bat`, `jq`, `fnm`, `go`, `pass`, `vault`/`openbao`, pinentry, `sshx`, `doppel`).
-- **`full`**: DevOps & cloud workstations (`required` + `docker`/`podman`, `compose`, `colima`, `kubectl`, `helm`, `kubectx`, `k9s`, `yamllint`, `kubeconform`, `yq`, `ghostty`, `yazi`, `rga`).
+- **`full`**: DevOps & cloud workstations (`required` + `docker`/`podman`, `compose`, `colima`, `kubectl`, `helm`, `kubectx`, `k9s`, `yamllint`, `kubeconform`, `yq`, `ghostty` (macOS/Linux desktop; skipped on WSL), `yazi`, `rga`).
 - **`optional`**: Non-blocking extras (`talosctl`, `glow`, `fastfetch`) that are never strictly required in any mode so personal vs. professional workstations both pass prerequisite checks cleanly.
 
 ## Validation & Quality Gates
 - **Health Checks**:
   - Before committing or opening a PR, always execute `scripts/doctor.sh` and `scripts/check-prerequisites.sh` to ensure all diagnostic checks pass cleanly across modes.
 - **Cross-Platform Compatibility**:
-  - Ensure scripts and configurations handle macOS (Darwin) and Linux (Arch/Debian) differences appropriately.
+  - Ensure scripts and configurations handle macOS (Darwin) and Linux (Arch/Debian/WSL) differences appropriately.

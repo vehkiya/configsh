@@ -416,7 +416,11 @@ check_tier_tool "full" "$CAT_LINTERS" "yq" "Yq (YAML processor)" "yq" "yq" "yq"
 # 9. Terminal Emulators & Extended Tools (Tier: full)
 # -----------------------------------------------------------------------------
 CAT_EXTENDED="Terminal Emulators & Extended Tools${OPT_LABEL}"
-check_tier_tool "full" "$CAT_EXTENDED" "ghostty" "Ghostty (terminal emulator)" "ghostty" "ghostty" ""
+# Ghostty runs on macOS and Linux desktop; on Windows / WSL, terminal emulation
+# is hosted on the Windows side (Windows Terminal, Warp, etc.).
+if ! is_wsl || command -v ghostty &>/dev/null; then
+    check_tier_tool "full" "$CAT_EXTENDED" "ghostty" "Ghostty (terminal emulator)" "ghostty" "ghostty" ""
+fi
 check_tier_tool "full" "$CAT_EXTENDED" "yazi" "Yazi (terminal file manager)" "yazi" "yazi" ""
 check_tier_tool "full" "$CAT_EXTENDED" "rga" "Ripgrep-all (search PDFs, archives)" "ripgrep-all" "ripgrep-all" "ripgrep-all"
 check_tier_tool "optional" "$CAT_EXTENDED" "fastfetch" "Fastfetch (system information banner)" "fastfetch" "fastfetch" "fastfetch"

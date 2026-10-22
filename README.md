@@ -30,7 +30,7 @@ cd ~/projects/configsh
 | :--- | :--- | :--- |
 | **`minimal`** | Remote servers, bastions, ephemeral VMs, CI | Base Zsh shell (`git`, `zsh`, `curl`), Oh My Zsh + plugins (`fzf-tab`, `autosuggestions`, `syntax-highlighting`), editor (`vim`/`nvim`/`nano`), permissions hardening (`chmod 700`/`600`), SSH key audit. |
 | **`required`** *(default)* | Daily developer laptops & workstations | Everything in `minimal` + `starship`, `eza`, `fzf`, `zoxide`, `direnv`, `ripgrep`, `bat`, `jq`, `fnm`, `go`, `pass`, `vault`/`openbao`, OS pinentry, and native utilities (`sshx`, `doppel`). |
-| **`full`** | Cloud, DevOps & professional workstations | Everything in `required` + containers (`docker`/`podman`, `compose`, `colima`), Kubernetes (`kubectl`, `helm`, `kubectx`, `k9s`), linters (`yamllint`, `kubeconform`, `yq`), and extended terminal tools (`ghostty`, `yazi`, `rga`). |
+| **`full`** | Cloud, DevOps & professional workstations | Everything in `required` + containers (`docker`/`podman`, `compose`, `colima`), Kubernetes (`kubectl`, `helm`, `kubectx`, `k9s`), linters (`yamllint`, `kubeconform`, `yq`), and extended terminal tools (`ghostty` on macOS/Linux, `yazi`, `rga`). *(On WSL, Ghostty is skipped automatically as terminal emulation is hosted on Windows).* |
 | **`optional`** *(add-ons)* | Personal machines, homelabs & extras | Non-blocking tools tracked across all modes: `talosctl` (bare-metal/homelab k8s), `glow` (markdown reader), `fastfetch` (system banner). |
 
 > [!NOTE]
@@ -48,7 +48,7 @@ source ~/.zshrc
 
 ## 📦 What's Included
 
-* **[Ghostty](.config/ghostty/config.ghostty)** *(Optional - applied automatically only if installed)*:
+* **[Ghostty](.config/ghostty/config.ghostty)** *(Optional - applied automatically only if installed on macOS or Linux; skipped on WSL)*:
   * Warm Gruvbox Dark aesthetic matching Starship.
   * JetBrainsMono Nerd Font with programming ligatures (`calt`, `liga`, `dlig`) and slashed zero (`zero`).
   * Frosted glass background blur (KDE Wayland / macOS) with 75% opacity and balanced window padding.

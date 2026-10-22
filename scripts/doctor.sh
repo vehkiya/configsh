@@ -43,9 +43,9 @@ doctor_info() {
 get_perm() {
     local target="$1"
     if [ "$OS" = "Darwin" ]; then
-        stat -f %Lp "$target" 2>/dev/null || echo ""
+        stat -L -f %Lp "$target" 2>/dev/null || stat -f %Lp "$target" 2>/dev/null || echo ""
     else
-        stat -c %a "$target" 2>/dev/null || echo ""
+        stat -L -c %a "$target" 2>/dev/null || stat -c %a "$target" 2>/dev/null || echo ""
     fi
 }
 
@@ -139,6 +139,8 @@ if command -v ghostty &>/dev/null || [ -d "/Applications/Ghostty.app" ] || [ -f 
         GHOSTTY_MAC_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
         check_symlink "$DOTFILES_DIR/.config/ghostty/config" "$GHOSTTY_MAC_DIR/config"
     fi
+elif is_wsl; then
+    doctor_info "Ghostty: Skipped (running in WSL; Windows host terminal used)"
 else
     doctor_info "Ghostty: Not installed (optional; config symlink skipped)"
 fi
@@ -201,6 +203,8 @@ for dir in "${SECRET_DIRS[@]}"; do
         perm="$(get_perm "$dir")"
         if [ "$perm" = "700" ]; then
             pass "$dir (chmod 700)"
+        elif is_wsl && [ -L "$dir" ] && [[ "$(readlink -f "$dir" 2>/dev/null)" == /mnt/* ]]; then
+            doctor_info "$dir -> $(readlink -f "$dir") (Windows filesystem mount; permissions managed by Windows host ACLs)"
         else
             fail "$dir has permissions $perm (expected 700)"
         fi
@@ -234,6 +238,8 @@ for file in "${SECRET_FILES[@]}"; do
         perm="$(get_perm "$file")"
         if [ "$perm" = "600" ]; then
             pass "$file (chmod 600)"
+        elif is_wsl && [ -L "$file" ] && [[ "$(readlink -f "$file" 2>/dev/null)" == /mnt/* ]]; then
+            doctor_info "$file -> $(readlink -f "$file") (Windows filesystem mount; permissions managed by Windows host ACLs)"
         else
             fail "$file has permissions $perm (expected 600)"
         fi
@@ -350,8 +356,8 @@ else
     fi
 fi
 
-# Linux Ghostty override check (if Ghostty is installed)
-if [ "$OS" = "Linux" ]; then
+# Linux Ghostty override check (if Ghostty is installed on native Linux)
+if [ "$OS" = "Linux" ] && ! is_wsl; then
     if command -v ghostty &>/dev/null || [ -f "/usr/lib/systemd/user/app-com.mitchellh.ghostty.service" ]; then
         GHOSTTY_OVERRIDE="$HOME/.config/systemd/user/app-com.mitchellh.ghostty.service.d/override.conf"
         if [ -f "$GHOSTTY_OVERRIDE" ]; then
