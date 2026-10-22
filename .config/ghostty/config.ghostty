@@ -69,8 +69,11 @@ mouse-hide-while-typing = true
 # (Ignored on Linux)
 macos-option-as-alt = left
 
-# Integrated tabs in titlebar (matches Linux gtk-titlebar-style = tabs)
-macos-titlebar-style = tabs
+# macOS Titlebar Style:
+# 'transparent' provides a seamless frosted glass blur across the window while
+# rendering full-width native tabs. 'tabs' triggers a known upstream AppKit bug
+# where the tab container collapses into a ~15% width box on the right side.
+macos-titlebar-style = transparent
 
 # =============================================================================
 # Shell Integration
