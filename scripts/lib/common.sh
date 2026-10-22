@@ -125,13 +125,71 @@ ssh_is_apple() {
     ssh -G -F /dev/null -o UseKeychain=yes configsh-no-such-host.invalid >/dev/null 2>&1
 }
 
-# Parse common flags (-y / --yes)
+# Mode management (minimal, required, full)
+CONFIGSH_MODE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/configsh/mode"
+
+get_configsh_mode() {
+    if [ -n "${CONFIGSH_MODE:-}" ]; then
+        echo "$CONFIGSH_MODE"
+    elif [ -f "$CONFIGSH_MODE_FILE" ]; then
+        local saved
+        saved="$(tr -d '[:space:]' < "$CONFIGSH_MODE_FILE" 2>/dev/null || true)"
+        case "$saved" in
+            minimal|required|full) echo "$saved"; return ;;
+        esac
+        echo "required"
+    else
+        echo "required"
+    fi
+}
+
+set_configsh_mode() {
+    local mode="$1"
+    mkdir -p "$(dirname "$CONFIGSH_MODE_FILE")"
+    echo "$mode" > "$CONFIGSH_MODE_FILE"
+}
+
+mode_level() {
+    case "$1" in
+        minimal)  echo 1 ;;
+        required) echo 2 ;;
+        full)     echo 3 ;;
+        *)        echo 2 ;;
+    esac
+}
+
+# Parse common flags (-y / --yes, -m / --mode, minimal|required|full)
 ASSUME_YES="${ASSUME_YES:-false}"
+PARSED_MODE=""
+
 for arg in "$@"; do
     case "$arg" in
         -y|--yes)
             ASSUME_YES=true
             ;;
+        --mode=*)
+            PARSED_MODE="${arg#*=}"
+            ;;
+        minimal|required|full)
+            PARSED_MODE="$arg"
+            ;;
     esac
 done
-export ASSUME_YES
+
+prev=""
+for arg in "$@"; do
+    if [ "$prev" = "-m" ] || [ "$prev" = "--mode" ]; then
+        case "$arg" in
+            minimal|required|full) PARSED_MODE="$arg" ;;
+        esac
+    fi
+    prev="$arg"
+done
+
+if [ -n "$PARSED_MODE" ]; then
+    CONFIGSH_MODE="$PARSED_MODE"
+else
+    CONFIGSH_MODE="$(get_configsh_mode)"
+fi
+
+export ASSUME_YES CONFIGSH_MODE

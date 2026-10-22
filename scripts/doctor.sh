@@ -14,6 +14,7 @@ echo -e "\n${BOLD}==============================================================
 echo -e "${BOLD}          System Diagnostic & Configuration Health Check        ${RESET}"
 echo -e "${BOLD}================================================================${RESET}\n"
 echo -e "Detected OS: ${BOLD}${OS}${RESET}"
+echo -e "Active Mode: ${BOLD}${CYAN}${CONFIGSH_MODE}${RESET}"
 echo -e "Dotfiles Directory: ${BOLD}${DOTFILES_DIR}${RESET}\n"
 
 ISSUES_COUNT=0
@@ -116,9 +117,19 @@ check_symlink() {
 }
 
 check_symlink "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
-check_symlink "$DOTFILES_DIR/.config/starship.toml" "$HOME/.config/starship.toml"
+
+if [ "$CONFIGSH_MODE" = "minimal" ] && ! command -v starship &>/dev/null; then
+    doctor_info "Starship: Not installed (optional in minimal mode)"
+else
+    check_symlink "$DOTFILES_DIR/.config/starship.toml" "$HOME/.config/starship.toml"
+fi
+
 if [ -f "$DOTFILES_DIR/.config/fastfetch/config.jsonc" ]; then
-    check_symlink "$DOTFILES_DIR/.config/fastfetch/config.jsonc" "$HOME/.config/fastfetch/config.jsonc"
+    if [ "$CONFIGSH_MODE" = "minimal" ] && ! command -v fastfetch &>/dev/null; then
+        doctor_info "Fastfetch: Not installed (optional in minimal mode)"
+    else
+        check_symlink "$DOTFILES_DIR/.config/fastfetch/config.jsonc" "$HOME/.config/fastfetch/config.jsonc"
+    fi
 fi
 # Ghostty config check (optional)
 if command -v ghostty &>/dev/null || [ -d "/Applications/Ghostty.app" ] || [ -f "/usr/lib/systemd/user/app-com.mitchellh.ghostty.service" ] || [ -L "$HOME/.config/ghostty/config" ]; then
@@ -132,8 +143,17 @@ else
     doctor_info "Ghostty: Not installed (optional; config symlink skipped)"
 fi
 
-check_symlink "$DOTFILES_DIR/.config/direnv/direnvrc" "$HOME/.config/direnv/direnvrc"
-check_symlink "$DOTFILES_DIR/scripts/pinentry-wrapper.sh" "$HOME/.local/bin/pinentry-wrapper"
+if [ "$CONFIGSH_MODE" = "minimal" ] && ! command -v direnv &>/dev/null; then
+    doctor_info "Direnv: Not installed (optional in minimal mode)"
+else
+    check_symlink "$DOTFILES_DIR/.config/direnv/direnvrc" "$HOME/.config/direnv/direnvrc"
+fi
+
+if [ "$CONFIGSH_MODE" = "minimal" ] && ! command -v pass &>/dev/null && ! command -v gpg &>/dev/null; then
+    doctor_info "Pinentry: GPG/pass not configured (optional in minimal mode)"
+else
+    check_symlink "$DOTFILES_DIR/scripts/pinentry-wrapper.sh" "$HOME/.local/bin/pinentry-wrapper"
+fi
 
 # -----------------------------------------------------------------------------
 # 3. Shell Framework & Plugins Check
@@ -248,23 +268,27 @@ fi
 header "[ 6. Live Agents & OS Keychain Integration ]"
 
 # GPG Agent
-if command -v gpg-connect-agent &>/dev/null; then
-    if gpg-connect-agent /bye >/dev/null 2>&1; then
-        pass "GPG Agent: Running and responsive"
-    else
-        doctor_warn "GPG Agent: Not currently responding"
-    fi
-fi
-
-GPG_AGENT_CONF="$HOME/.gnupg/gpg-agent.conf"
-if [ -f "$GPG_AGENT_CONF" ]; then
-    if grep -q "pinentry-wrapper" "$GPG_AGENT_CONF" 2>/dev/null; then
-        pass "GPG Agent Config: pinentry-wrapper configured"
-    else
-        fail "GPG Agent Config: pinentry-wrapper missing in $GPG_AGENT_CONF"
-    fi
+if [ "$CONFIGSH_MODE" = "minimal" ] && ! command -v gpg &>/dev/null && ! command -v pass &>/dev/null; then
+    doctor_info "GPG Agent: Skipped in minimal mode (pass/GPG not required)"
 else
-    fail "GPG Agent Config: $GPG_AGENT_CONF missing"
+    if command -v gpg-connect-agent &>/dev/null; then
+        if gpg-connect-agent /bye >/dev/null 2>&1; then
+            pass "GPG Agent: Running and responsive"
+        else
+            doctor_warn "GPG Agent: Not currently responding"
+        fi
+    fi
+
+    GPG_AGENT_CONF="$HOME/.gnupg/gpg-agent.conf"
+    if [ -f "$GPG_AGENT_CONF" ]; then
+        if grep -q "pinentry-wrapper" "$GPG_AGENT_CONF" 2>/dev/null; then
+            pass "GPG Agent Config: pinentry-wrapper configured"
+        else
+            fail "GPG Agent Config: pinentry-wrapper missing in $GPG_AGENT_CONF"
+        fi
+    else
+        fail "GPG Agent Config: $GPG_AGENT_CONF missing"
+    fi
 fi
 
 # SSH Agent
@@ -372,37 +396,41 @@ fi
 # -----------------------------------------------------------------------------
 header "[ 8. Native Compiled Utilities ]"
 
-for utility in sshx doppel; do
-    bin_path="$HOME/.local/bin/$utility"
-    if [ -x "$bin_path" ]; then
-        pass "Compiled utility: $bin_path"
-    else
-        fail "Missing compiled utility: $bin_path (run ./setup.sh to install)"
-    fi
-done
-
-# doppel's own checks: anything that could make Git use the wrong account
-if [ -x "$HOME/.local/bin/doppel" ] && compgen -G "${XDG_CONFIG_HOME:-$HOME/.config}/doppel/accounts/*.gitconfig" >/dev/null; then
-    if "$HOME/.local/bin/doppel" doctor >/dev/null 2>&1; then
-        pass "doppel doctor: no problems with your Git accounts"
-    else
-        fail "doppel doctor found problems with your Git accounts"
-        echo -e "        ${YELLOW}↳ Run: doppel doctor${RESET}"
-    fi
-fi
-
-if [ -d "$DOTFILES_DIR/cmd" ]; then
-    for tool_dir in "$DOTFILES_DIR"/cmd/*; do
-        if [ -d "$tool_dir" ]; then
-            tool_name="$(basename "$tool_dir")"
-            bin_path="$HOME/.local/bin/$tool_name"
-            if [ -x "$bin_path" ]; then
-                pass "Compiled utility: $bin_path"
-            else
-                fail "Missing compiled utility: $bin_path (run ./setup.sh to compile)"
-            fi
+if [ "$CONFIGSH_MODE" = "minimal" ]; then
+    doctor_info "Native utilities (sshx, doppel): Skipped in minimal mode"
+else
+    for utility in sshx doppel; do
+        bin_path="$HOME/.local/bin/$utility"
+        if [ -x "$bin_path" ]; then
+            pass "Compiled utility: $bin_path"
+        else
+            fail "Missing compiled utility: $bin_path (run ./setup.sh to install)"
         fi
     done
+
+    # doppel's own checks: anything that could make Git use the wrong account
+    if [ -x "$HOME/.local/bin/doppel" ] && compgen -G "${XDG_CONFIG_HOME:-$HOME/.config}/doppel/accounts/*.gitconfig" >/dev/null; then
+        if "$HOME/.local/bin/doppel" doctor >/dev/null 2>&1; then
+            pass "doppel doctor: no problems with your Git accounts"
+        else
+            fail "doppel doctor found problems with your Git accounts"
+            echo -e "        ${YELLOW}↳ Run: doppel doctor${RESET}"
+        fi
+    fi
+
+    if [ -d "$DOTFILES_DIR/cmd" ]; then
+        for tool_dir in "$DOTFILES_DIR"/cmd/*; do
+            if [ -d "$tool_dir" ]; then
+                tool_name="$(basename "$tool_dir")"
+                bin_path="$HOME/.local/bin/$tool_name"
+                if [ -x "$bin_path" ]; then
+                    pass "Compiled utility: $bin_path"
+                else
+                    fail "Missing compiled utility: $bin_path (run ./setup.sh to compile)"
+                fi
+            fi
+        done
+    fi
 fi
 
 # -----------------------------------------------------------------------------
@@ -410,13 +438,13 @@ fi
 # -----------------------------------------------------------------------------
 echo -e "\n${BOLD}================================================================${RESET}"
 if [ "$ISSUES_COUNT" -eq 0 ] && [ "$WARNINGS_COUNT" -eq 0 ]; then
-    echo -e "${GREEN}${BOLD}Diagnostic Result: All systems healthy! ($CHECKS_PASSED checks passed, 0 issues) ✅${RESET}\n"
+    echo -e "${GREEN}${BOLD}Diagnostic Result: All systems healthy for '${CONFIGSH_MODE}' mode! ($CHECKS_PASSED checks passed, 0 issues) ✅${RESET}\n"
     exit 0
 elif [ "$ISSUES_COUNT" -eq 0 ]; then
     echo -e "${YELLOW}${BOLD}Diagnostic Result: Passed with $WARNINGS_COUNT warning(s) ($CHECKS_PASSED checks passed) ⚠️${RESET}\n"
     exit 0
 else
     echo -e "${RED}${BOLD}Diagnostic Result: $ISSUES_COUNT issue(s) detected ($CHECKS_PASSED checks passed, $WARNINGS_COUNT warnings) ❌${RESET}"
-    echo -e "${CYAN}Run '${BOLD}./setup.sh${RESET}${CYAN}' to automatically remediate detected configuration issues.${RESET}\n"
+    echo -e "${CYAN}Run '${BOLD}./setup.sh --mode=${CONFIGSH_MODE}${RESET}${CYAN}' to automatically remediate detected configuration issues.${RESET}\n"
     exit 1
 fi

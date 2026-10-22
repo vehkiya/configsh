@@ -8,16 +8,32 @@ Designed for portability, clean aesthetics (Gruvbox Dark), and supply chain defe
 
 ## 🚀 Quick Setup
 
-On any new macOS or Linux machine:
+On any new macOS or Linux machine, choose the setup mode that fits your environment:
 
 ```bash
 git clone https://github.com/vehkiya/configsh.git ~/projects/configsh
 cd ~/projects/configsh
-./setup.sh
+
+# 1. Standard Developer Workstation (Default)
+./setup.sh              # or ./setup.sh required
+
+# 2. Lightweight / Headless Server (no heavy runtimes or secrets engines)
+./setup.sh minimal
+
+# 3. Full Cloud & DevOps Stack (all containers, k8s, linters & TUI tools)
+./setup.sh full
 ```
 
+### Setup Modes
+
+| Mode | Target Machine | What's Included |
+| :--- | :--- | :--- |
+| **`minimal`** | Remote servers, bastions, ephemeral VMs, CI | Base Zsh shell (`git`, `zsh`, `curl`), Oh My Zsh + plugins (`fzf-tab`, `autosuggestions`, `syntax-highlighting`), editor (`vim`/`nvim`/`nano`), permissions hardening (`chmod 700`/`600`), SSH key audit. |
+| **`required`** *(default)* | Daily developer laptops & workstations | Everything in `minimal` + `starship`, `eza`, `fzf`, `zoxide`, `direnv`, `ripgrep`, `bat`, `jq`, `fnm`, `go`, `pass`, `vault`/`openbao`, OS pinentry, and native utilities (`sshx`, `doppel`). |
+| **`full`** | Cloud, DevOps & power-user workstations | Everything in `required` + containers (`docker`/`podman`, `compose`, `colima`), Kubernetes (`kubectl`, `helm`, `kubectx`, `k9s`, `talosctl`), linters (`yamllint`, `kubeconform`, `yq`), and extended terminal tools (`ghostty`, `glow`, `yazi`, `fastfetch`, `rga`). |
+
 > [!NOTE]
-> `./setup.sh` automatically checks for recommended packages and tools (via [`scripts/check-prerequisites.sh`](scripts/check-prerequisites.sh)). If any are missing, it provides platform-tailored installation commands (`brew`, `pacman`/`paru`, `apt`) and asks for confirmation before proceeding. Pass `-y` or `--yes` to proceed without prompting.
+> `./setup.sh` automatically checks for prerequisites tailored to your chosen mode (via [`scripts/check-prerequisites.sh`](scripts/check-prerequisites.sh)). If any required packages are missing, it provides platform-tailored installation commands (`brew`, `pacman`/`paru`, `apt`) and asks for confirmation before proceeding. Pass `-y` or `--yes` to proceed without prompting.
 
 Restart your terminal or run:
 ```bash

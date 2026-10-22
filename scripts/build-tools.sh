@@ -14,6 +14,12 @@ source "$SCRIPT_DIR/lib/common.sh" 2>/dev/null || true
 
 header "Native Utility Binaries"
 
+# In minimal mode, native tools (sshx, doppel) are optional; skip building them
+if [ "${CONFIGSH_MODE:-required}" = "minimal" ]; then
+    info "Minimal mode active: skipping native utility compilation (sshx, doppel)."
+    return 0 2>/dev/null || exit 0
+fi
+
 BIN_DIR="$HOME/.local/bin"
 mkdir -p "$BIN_DIR"
 

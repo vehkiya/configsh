@@ -34,7 +34,7 @@
 * <kbd>Tab</kbd> — Fuzzy completion popup with live previews (`fzf-tab`, `eza` for dirs, `bat` for files)
 * <kbd>Ctrl</kbd> + <kbd>R</kbd> — Interactive command history search with fuzzy filtering (`fzf`)
 * <kbd>→</kbd> or <kbd>End</kbd> — Accept `zsh-autosuggestions` ghost text completion
-* **`./setup.sh --verify`** — Run read-only health check (`doctor.sh`) on symlinks, permissions, and agent sockets
+* **`./setup.sh [minimal|required|full]`** — Run setup with target mode (pass `--verify` for `doctor.sh` health check)
 * **`~/.zshrc.local`** — Machine-specific private overrides and secrets (chmod `600`, untracked by Git)
 
 ---
