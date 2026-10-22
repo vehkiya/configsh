@@ -36,9 +36,9 @@ window-width = 120
 window-height = 40
 
 # Window decoration style:
-# 'client' tells KDE Plasma / KWin not to draw server-side decorations, omitting
-# the KDE titlebar in favor of Ghostty's integrated tabs titlebar.
-window-decoration = client
+# 'none' eliminates GTK4's outer CSD shadow margins on Wayland, allowing the
+# background blur to cover the full window edge-to-edge without the inset border.
+window-decoration = none
 
 # Inner breathing room around Starship's Powerline capsules ( ... )
 window-padding-x = 14
