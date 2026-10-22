@@ -30,7 +30,8 @@ cd ~/projects/configsh
 | :--- | :--- | :--- |
 | **`minimal`** | Remote servers, bastions, ephemeral VMs, CI | Base Zsh shell (`git`, `zsh`, `curl`), Oh My Zsh + plugins (`fzf-tab`, `autosuggestions`, `syntax-highlighting`), editor (`vim`/`nvim`/`nano`), permissions hardening (`chmod 700`/`600`), SSH key audit. |
 | **`required`** *(default)* | Daily developer laptops & workstations | Everything in `minimal` + `starship`, `eza`, `fzf`, `zoxide`, `direnv`, `ripgrep`, `bat`, `jq`, `fnm`, `go`, `pass`, `vault`/`openbao`, OS pinentry, and native utilities (`sshx`, `doppel`). |
-| **`full`** | Cloud, DevOps & power-user workstations | Everything in `required` + containers (`docker`/`podman`, `compose`, `colima`), Kubernetes (`kubectl`, `helm`, `kubectx`, `k9s`, `talosctl`), linters (`yamllint`, `kubeconform`, `yq`), and extended terminal tools (`ghostty`, `glow`, `yazi`, `fastfetch`, `rga`). |
+| **`full`** | Cloud, DevOps & professional workstations | Everything in `required` + containers (`docker`/`podman`, `compose`, `colima`), Kubernetes (`kubectl`, `helm`, `kubectx`, `k9s`), linters (`yamllint`, `kubeconform`, `yq`), and extended terminal tools (`ghostty`, `yazi`, `rga`). |
+| **`optional`** *(add-ons)* | Personal machines, homelabs & extras | Non-blocking tools tracked across all modes: `talosctl` (bare-metal/homelab k8s), `glow` (markdown reader), `fastfetch` (system banner). |
 
 > [!NOTE]
 > `./setup.sh` automatically checks for prerequisites tailored to your chosen mode (via [`scripts/check-prerequisites.sh`](scripts/check-prerequisites.sh)). If any required packages are missing, it provides platform-tailored installation commands (`brew`, `pacman`/`paru`, `apt`) and asks for confirmation before proceeding. Pass `-y` or `--yes` to proceed without prompting.

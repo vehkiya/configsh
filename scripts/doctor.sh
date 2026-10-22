@@ -125,8 +125,8 @@ else
 fi
 
 if [ -f "$DOTFILES_DIR/.config/fastfetch/config.jsonc" ]; then
-    if [ "$CONFIGSH_MODE" = "minimal" ] && ! command -v fastfetch &>/dev/null; then
-        doctor_info "Fastfetch: Not installed (optional in minimal mode)"
+    if ! command -v fastfetch &>/dev/null && [ ! -L "$HOME/.config/fastfetch/config.jsonc" ]; then
+        doctor_info "Fastfetch: Not installed (optional)"
     else
         check_symlink "$DOTFILES_DIR/.config/fastfetch/config.jsonc" "$HOME/.config/fastfetch/config.jsonc"
     fi

@@ -89,6 +89,7 @@ _check_tool_impl() {
     local pacman_pkg="$5"
     local apt_pkg="$6"
     local is_optional="$7"  # true or false
+    local tier_source="${8:-}"
 
     local installed=false
     local bin_path=""
@@ -151,7 +152,11 @@ _check_tool_impl() {
         return 0
     else
         if [ "$is_optional" = true ]; then
-            add_result "$category" "opt_missing" "$name" "Not installed (optional for $CONFIGSH_MODE)"
+            local opt_note="Not installed (optional)"
+            if [ -n "$tier_source" ] && [ "$tier_source" != "optional" ]; then
+                opt_note="Not installed (available in ${tier_source} mode)"
+            fi
+            add_result "$category" "opt_missing" "$name" "$opt_note"
             [[ -n "$brew_pkg" ]] && OPT_MISSING_BREW+=("$brew_pkg")
             [[ -n "$pacman_pkg" ]] && OPT_MISSING_PACMAN+=("$pacman_pkg")
             [[ -n "$apt_pkg" ]] && OPT_MISSING_APT+=("$apt_pkg")
@@ -170,7 +175,7 @@ _check_tool_impl() {
 }
 
 check_tier_tool() {
-    local tier="$1"       # "minimal", "required", or "full"
+    local tier="$1"       # "minimal", "required", "full", or "optional"
     local category="$2"
     local cmd="$3"
     local name="$4"
@@ -178,22 +183,27 @@ check_tier_tool() {
     local pacman_pkg="$6"
     local apt_pkg="$7"
 
+    if [ "$tier" = "optional" ]; then
+        _check_tool_impl "$category" "$cmd" "$name" "$brew_pkg" "$pacman_pkg" "$apt_pkg" true "optional"
+        return
+    fi
+
     local t_level
     t_level="$(mode_level "$tier")"
 
     if [ "$t_level" -le "$ACTIVE_LEVEL" ]; then
-        _check_tool_impl "$category" "$cmd" "$name" "$brew_pkg" "$pacman_pkg" "$apt_pkg" false
+        _check_tool_impl "$category" "$cmd" "$name" "$brew_pkg" "$pacman_pkg" "$apt_pkg" false "$tier"
     else
-        _check_tool_impl "$category" "$cmd" "$name" "$brew_pkg" "$pacman_pkg" "$apt_pkg" true
+        _check_tool_impl "$category" "$cmd" "$name" "$brew_pkg" "$pacman_pkg" "$apt_pkg" true "$tier"
     fi
 }
 
 check_tool() {
-    _check_tool_impl "$1" "$2" "$3" "$4" "$5" "$6" false
+    _check_tool_impl "$1" "$2" "$3" "$4" "$5" "$6" false ""
 }
 
 check_optional_tool() {
-    _check_tool_impl "$1" "$2" "$3" "$4" "$5" "$6" true
+    _check_tool_impl "$1" "$2" "$3" "$4" "$5" "$6" true "optional"
 }
 
 # -----------------------------------------------------------------------------
@@ -392,7 +402,7 @@ check_tier_tool "full" "$CAT_CONTAINERS" "helm" "Helm (K8s package manager)" "he
 check_tier_tool "full" "$CAT_CONTAINERS" "kubectx" "Kubectx (context switcher)" "kubectx" "kubectx" "kubectx"
 check_tier_tool "full" "$CAT_CONTAINERS" "kubens" "Kubens (namespace switcher)" "kubectx" "kubectx" "kubectx"
 check_tier_tool "full" "$CAT_CONTAINERS" "k9s" "K9s (K8s terminal UI)" "k9s" "k9s" ""
-check_tier_tool "full" "$CAT_CONTAINERS" "talosctl" "Talosctl (Talos Linux CLI)" "talosctl" "talosctl" ""
+check_tier_tool "optional" "$CAT_CONTAINERS" "talosctl" "Talosctl (Talos Linux CLI)" "talosctl" "talosctl" ""
 
 # -----------------------------------------------------------------------------
 # 8. Linters & Manifest Tools (Tier: full)
@@ -408,9 +418,9 @@ check_tier_tool "full" "$CAT_LINTERS" "yq" "Yq (YAML processor)" "yq" "yq" "yq"
 CAT_EXTENDED="Terminal Emulators & Extended Tools${OPT_LABEL}"
 check_tier_tool "full" "$CAT_EXTENDED" "ghostty" "Ghostty (terminal emulator)" "ghostty" "ghostty" ""
 check_tier_tool "full" "$CAT_EXTENDED" "yazi" "Yazi (terminal file manager)" "yazi" "yazi" ""
-check_tier_tool "full" "$CAT_EXTENDED" "fastfetch" "Fastfetch (system information banner)" "fastfetch" "fastfetch" "fastfetch"
-check_tier_tool "full" "$CAT_EXTENDED" "glow" "Glow (terminal markdown reader)" "glow" "glow" ""
 check_tier_tool "full" "$CAT_EXTENDED" "rga" "Ripgrep-all (search PDFs, archives)" "ripgrep-all" "ripgrep-all" "ripgrep-all"
+check_tier_tool "optional" "$CAT_EXTENDED" "fastfetch" "Fastfetch (system information banner)" "fastfetch" "fastfetch" "fastfetch"
+check_tier_tool "optional" "$CAT_EXTENDED" "glow" "Glow (terminal markdown reader)" "glow" "glow" ""
 
 # -----------------------------------------------------------------------------
 # Print Formatted Prerequisites Summary
@@ -454,9 +464,11 @@ fi
 if [ "$OPT_TOTAL" -gt 0 ]; then
     opt_tag="Optional Packages"
     if [ "$CONFIGSH_MODE" = "minimal" ]; then
-        opt_tag="Workstation & Cloud (optional)"
+        opt_tag="Workstation & Cloud (available in required/full)"
     elif [ "$CONFIGSH_MODE" = "required" ]; then
-        opt_tag="Cloud & Power Tools (optional)"
+        opt_tag="Cloud & Power Tools (available in full/optional)"
+    elif [ "$CONFIGSH_MODE" = "full" ]; then
+        opt_tag="Optional Tools (talosctl, glow, fastfetch)"
     fi
     if [ "$OPT_MISSING" -eq 0 ]; then
         echo -e "${GREEN}${BOLD}${opt_tag}:  ${OPT_INSTALLED}/${OPT_TOTAL} installed (100% complete) ✅${RESET}\n"
@@ -539,8 +551,12 @@ if [ "$CORE_MISSING" -gt 0 ]; then
     exit 1
 fi
 
-if [ "$OPT_MISSING" -gt 0 ] && [ "$CONFIGSH_MODE" != "full" ]; then
-    info "Optional packages can be installed via:"
+if [ "$OPT_MISSING" -gt 0 ]; then
+    if [ "$CONFIGSH_MODE" = "full" ]; then
+        info "Optional packages (talosctl, glow, fastfetch) can be installed via:"
+    else
+        info "Optional packages can be installed via:"
+    fi
     if [ "$OS" = "Linux" ]; then
         if command -v pacman &>/dev/null; then
             opt_pacman="$(dedup ${OPT_MISSING_PACMAN[@]+"${OPT_MISSING_PACMAN[@]}"})"
@@ -559,7 +575,7 @@ if [ "$OPT_MISSING" -gt 0 ] && [ "$CONFIGSH_MODE" != "full" ]; then
             [ -n "$opt_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${opt_brew}${RESET}"
         fi
 
-        if ! command -v docker &>/dev/null && ! command -v podman &>/dev/null; then
+        if [ "$ACTIVE_LEVEL" -lt 3 ] && ! command -v docker &>/dev/null && ! command -v podman &>/dev/null; then
             echo -e "\n  ${BLUE}↳ Docker post-install steps:${RESET}"
             echo -e "    ${BOLD}sudo groupadd docker${RESET}"
             echo -e "    ${BOLD}sudo usermod -aG docker \$USER${RESET}"
@@ -568,7 +584,7 @@ if [ "$OPT_MISSING" -gt 0 ] && [ "$CONFIGSH_MODE" != "full" ]; then
     elif [ "$OS" = "Darwin" ]; then
         opt_brew="$(dedup ${OPT_MISSING_BREW[@]+"${OPT_MISSING_BREW[@]}"})"
         [ -n "$opt_brew" ] && echo -e "  ${CYAN}${BOLD}brew install ${opt_brew}${RESET}"
-        if ! command -v colima &>/dev/null && ! command -v podman &>/dev/null && [ ! -d "/Applications/OrbStack.app" ] && [ ! -d "/Applications/Docker.app" ]; then
+        if [ "$ACTIVE_LEVEL" -lt 3 ] && ! command -v colima &>/dev/null && ! command -v podman &>/dev/null && [ ! -d "/Applications/OrbStack.app" ] && [ ! -d "/Applications/Docker.app" ]; then
             echo -e "\n  ${BLUE}↳ Colima recommended startup (Apple Silicon vz + Rosetta):${RESET}"
             echo -e "    ${BOLD}colima start --vm-type=vz --vz-rosetta --cpu 4 --memory 4${RESET}"
         fi
