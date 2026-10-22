@@ -28,9 +28,52 @@ docker_is_podman() {
     docker --version 2>/dev/null | grep -qi podman
 }
 
-# True when running inside Windows Subsystem for Linux (WSL)
+# True when running inside Windows Subsystem for Linux (WSL), decided once from
+# WSL's environment, its interop sockets, or its binfmt handler. The kernel
+# string isn't used: containers on a WSL2 kernel (Docker Desktop's, CI runners
+# on Windows hosts) share it without being a WSL distro.
+if [ -n "${WSL_DISTRO_NAME:-}" ] || [ -n "${WSL_INTEROP:-}" ] || [ -d /run/WSL ] || [ -e /proc/sys/fs/binfmt_misc/WSLInterop ]; then
+    IS_WSL=true
+else
+    IS_WSL=false
+fi
+
 is_wsl() {
-    [ -n "${WSL_DISTRO_NAME:-}" ] || [ -n "${WSL_INTEROP:-}" ] || grep -qi -e 'microsoft' -e 'wsl' /proc/version 2>/dev/null
+    [ "$IS_WSL" = true ]
+}
+
+# True when Ghostty is installed: the macOS app, or the binary or its systemd
+# user service on Linux (including WSL, where it can run through WSLg)
+has_ghostty() {
+    command -v ghostty &>/dev/null || [ -d "/Applications/Ghostty.app" ] || [ -f "/usr/lib/systemd/user/app-com.mitchellh.ghostty.service" ]
+}
+
+# Print a path's permission bits in octal, following symlinks (nothing if the
+# path can't be read)
+get_perm() {
+    if [ "$OS" = "Darwin" ]; then
+        stat -L -f %Lp "$1" 2>/dev/null || echo ""
+    else
+        stat -L -c %a "$1" 2>/dev/null || echo ""
+    fi
+}
+
+# True when a path lives on a Windows drive mounted into WSL (DrvFs) without
+# the 'metadata' option, where chmod does nothing and every file shows the
+# mount's default mode, so only Windows ACLs protect it. Matched by filesystem
+# type, so any automount root counts, and symlinks are followed, so a file
+# reached through a linked parent (~/.ssh -> /mnt/c/Users/me/.ssh) counts too.
+windows_fs_ignores_chmod() {
+    local fstype opts
+    is_wsl && command -v findmnt &>/dev/null || return 1
+    read -r fstype opts < <(findmnt -n -o FSTYPE,OPTIONS -T "$1" 2>/dev/null) || return 1
+    case "$fstype:$opts" in
+        drvfs:*|9p:*aname=drvfs*) ;;
+        *) return 1 ;;
+    esac
+    case ";${opts//,/;};" in
+        *";metadata;"*) return 1 ;;
+    esac
 }
 
 # Pick a backup path that never overwrites an earlier backup

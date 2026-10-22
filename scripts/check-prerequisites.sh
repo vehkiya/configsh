@@ -418,7 +418,7 @@ check_tier_tool "full" "$CAT_LINTERS" "yq" "Yq (YAML processor)" "yq" "yq" "yq"
 CAT_EXTENDED="Terminal Emulators & Extended Tools${OPT_LABEL}"
 # Ghostty runs on macOS and Linux desktop; on Windows / WSL, terminal emulation
 # is hosted on the Windows side (Windows Terminal, Warp, etc.).
-if ! is_wsl || command -v ghostty &>/dev/null; then
+if ! is_wsl || has_ghostty; then
     check_tier_tool "full" "$CAT_EXTENDED" "ghostty" "Ghostty (terminal emulator)" "ghostty" "ghostty" ""
 fi
 check_tier_tool "full" "$CAT_EXTENDED" "yazi" "Yazi (terminal file manager)" "yazi" "yazi" ""
