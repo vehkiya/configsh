@@ -36,7 +36,7 @@ source ~/.zshrc
   * JetBrainsMono Nerd Font with programming ligatures (`calt`, `liga`, `dlig`) and slashed zero (`zero`).
   * Frosted glass background blur (KDE Wayland / macOS) with 75% opacity and balanced window padding.
   * Native shell integration with OSC 133 prompt markers.
-  * Integrated tab titlebar (`gtk-titlebar-style = tabs`) and unfocused split dimming.
+  * Integrated tab titlebar (`gtk-titlebar-style = tabs` on Linux, `macos-titlebar-style = tabs` on macOS) and unfocused split dimming.
   * Ergonomic macOS Option key mapping (`macos-option-as-alt = left`, preserving Right Option for accents/symbols).
   * Systemd drop-in override for Linux to avoid `Type=notify-reload` race conditions.
 * **[Fastfetch](.config/fastfetch/config.jsonc)**:

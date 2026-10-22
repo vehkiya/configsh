@@ -69,6 +69,9 @@ mouse-hide-while-typing = true
 # (Ignored on Linux)
 macos-option-as-alt = left
 
+# Integrated tabs in titlebar (matches Linux gtk-titlebar-style = tabs)
+macos-titlebar-style = tabs
+
 # =============================================================================
 # Shell Integration
 # =============================================================================
