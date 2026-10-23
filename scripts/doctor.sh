@@ -130,7 +130,12 @@ if has_ghostty || [ -L "$HOME/.config/ghostty/config" ]; then
 
     if [ "$OS" = "Darwin" ]; then
         GHOSTTY_MAC_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
-        check_symlink "$DOTFILES_DIR/.config/ghostty/config" "$GHOSTTY_MAC_DIR/config"
+        if [ -L "$GHOSTTY_MAC_DIR/config" ]; then
+            fail "Duplicate Ghostty AppSupport symlink detected ($GHOSTTY_MAC_DIR/config causes double-loading cycle errors)"
+            echo -e "        ${YELLOW}↳ Run './setup.sh' to remove redundant symlink${RESET}"
+        else
+            pass "macOS Ghostty: Single XDG configuration path active (no duplicate load cycles)"
+        fi
     elif [ "$OS" = "Linux" ] && [ -f "$DOTFILES_DIR/.config/ghostty/config.linux" ]; then
         check_symlink "$DOTFILES_DIR/.config/ghostty/config.linux" "$HOME/.config/ghostty/config.local"
     fi

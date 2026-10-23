@@ -235,11 +235,23 @@ fi
 if has_ghostty || [ -L "$HOME/.config/ghostty/config" ]; then
     link_file "$DOTFILES_DIR/.config/ghostty/config" "$HOME/.config/ghostty/config"
 
-    # macOS Ghostty alternative location support & cleanup
+    # macOS Ghostty cleanup:
+    # Ghostty on macOS searches both ~/.config/ghostty/config and
+    # ~/Library/Application Support/com.mitchellh.ghostty/config in sequence.
+    # If both paths exist and point to the same dotfiles config, Ghostty loads the
+    # configuration twice. This double-evaluation causes any 'config-file' directive
+    # to trigger a false-positive "cycle detected" error. We standardize on the
+    # cross-platform XDG path (~/.config/ghostty/config) and remove redundant AppSupport links.
     if [ "$OS" = "Darwin" ]; then
         GHOSTTY_MAC_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
-        mkdir -p "$GHOSTTY_MAC_DIR"
-        link_file "$DOTFILES_DIR/.config/ghostty/config" "$GHOSTTY_MAC_DIR/config"
+        if [ -L "$GHOSTTY_MAC_DIR/config" ]; then
+            rm -f "$GHOSTTY_MAC_DIR/config"
+            success "Removed duplicate Ghostty AppSupport config symlink (prevents double-load cycle error)"
+        fi
+        if [ -L "$GHOSTTY_MAC_DIR/config.ghostty" ]; then
+            rm -f "$GHOSTTY_MAC_DIR/config.ghostty"
+            success "Removed duplicate Ghostty AppSupport config.ghostty symlink"
+        fi
         # If moving dotfiles between Linux and macOS, remove any Linux override link
         if [ -L "$HOME/.config/ghostty/config.local" ] && [ "$(readlink "$HOME/.config/ghostty/config.local")" = "$DOTFILES_DIR/.config/ghostty/config.linux" ]; then
             rm -f "$HOME/.config/ghostty/config.local"
