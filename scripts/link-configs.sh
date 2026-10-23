@@ -235,11 +235,19 @@ fi
 if has_ghostty || [ -L "$HOME/.config/ghostty/config" ]; then
     link_file "$DOTFILES_DIR/.config/ghostty/config" "$HOME/.config/ghostty/config"
 
-    # macOS Ghostty alternative location support
+    # macOS Ghostty alternative location support & cleanup
     if [ "$OS" = "Darwin" ]; then
         GHOSTTY_MAC_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
         mkdir -p "$GHOSTTY_MAC_DIR"
         link_file "$DOTFILES_DIR/.config/ghostty/config" "$GHOSTTY_MAC_DIR/config"
+        # If moving dotfiles between Linux and macOS, remove any Linux override link
+        if [ -L "$HOME/.config/ghostty/config.local" ] && [ "$(readlink "$HOME/.config/ghostty/config.local")" = "$DOTFILES_DIR/.config/ghostty/config.linux" ]; then
+            rm -f "$HOME/.config/ghostty/config.local"
+        fi
+    elif [ "$OS" = "Linux" ]; then
+        if [ -f "$DOTFILES_DIR/.config/ghostty/config.linux" ]; then
+            link_file "$DOTFILES_DIR/.config/ghostty/config.linux" "$HOME/.config/ghostty/config.local"
+        fi
     fi
 elif is_wsl; then
     success "WSL environment detected (host terminal used); skipping Ghostty configuration symlinks."
