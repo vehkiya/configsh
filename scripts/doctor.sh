@@ -128,6 +128,12 @@ fi
 if has_ghostty || [ -L "$HOME/.config/ghostty/config" ]; then
     check_symlink "$DOTFILES_DIR/.config/ghostty/config" "$HOME/.config/ghostty/config"
 
+    # Verify no legacy config.ghostty symlink exists (causes double-loading)
+    if [ -L "$HOME/.config/ghostty/config.ghostty" ]; then
+        fail "Duplicate Ghostty config symlink detected (~/.config/ghostty/config.ghostty causes double-loading cycle errors)"
+        echo -e "        ${YELLOW}↳ Run './setup.sh' to remove redundant symlink${RESET}"
+    fi
+
     if [ "$OS" = "Darwin" ]; then
         GHOSTTY_MAC_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
         if [ -L "$GHOSTTY_MAC_DIR/config" ]; then

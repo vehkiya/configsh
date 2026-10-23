@@ -235,6 +235,14 @@ fi
 if has_ghostty || [ -L "$HOME/.config/ghostty/config" ]; then
     link_file "$DOTFILES_DIR/.config/ghostty/config" "$HOME/.config/ghostty/config"
 
+    # Clean up legacy config.ghostty symlink in ~/.config/ghostty if present.
+    # Ghostty loads BOTH config and config.ghostty sequentially if both exist.
+    # Having both causes double-loading and false cycle detection errors.
+    if [ -L "$HOME/.config/ghostty/config.ghostty" ]; then
+        rm -f "$HOME/.config/ghostty/config.ghostty"
+        success "Removed legacy ~/.config/ghostty/config.ghostty symlink (prevents double-load cycles)"
+    fi
+
     # macOS Ghostty cleanup:
     # Ghostty on macOS searches both ~/.config/ghostty/config and
     # ~/Library/Application Support/com.mitchellh.ghostty/config in sequence.
