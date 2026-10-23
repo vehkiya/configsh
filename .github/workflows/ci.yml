@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Lint shell scripts
+        run: shellcheck --version && shellcheck -x --severity=warning setup.sh scripts/*.sh scripts/lib/*.sh
+
+  syntax:
+    name: Syntax (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # macOS checks the scripts against its stock bash 3.2, which runs
+        # setup.sh on a fresh Mac before Homebrew's bash is installed.
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install zsh
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq zsh
+
+      - name: Parse bash scripts
+        run: |
+          /bin/bash --version | head -1
+          status=0
+          for f in setup.sh scripts/*.sh scripts/lib/*.sh .config/direnv/direnvrc; do
+            /bin/bash -n "$f" || { echo "::error file=$f::bash syntax error"; status=1; }
+          done
+          exit $status
+
+      - name: Parse .zshrc
+        run: zsh --version && zsh -n .zshrc
+
+      - name: Parse Starship config
+        run: python3 -c 'import sys, tomllib; tomllib.load(open(sys.argv[1], "rb"))' .config/starship.toml

@@ -21,5 +21,8 @@
 ## Validation & Quality Gates
 - **Health Checks**:
   - Before committing or opening a PR, always execute `scripts/doctor.sh` and `scripts/check-prerequisites.sh` to ensure all diagnostic checks pass cleanly across modes.
+- **CI** (`.github/workflows/ci.yml`, required to merge into `main`):
+  - `shellcheck -x --severity=warning` over `setup.sh` and `scripts/`; run it locally before pushing.
+  - Syntax checks on Ubuntu and macOS: `bash -n` with the stock `/bin/bash` (3.2 on macOS, which runs `setup.sh` before Homebrew's bash exists, so avoid bash 4+ syntax), `zsh -n .zshrc`, and the Starship TOML.
 - **Cross-Platform Compatibility**:
   - Ensure scripts and configurations handle macOS (Darwin) and Linux (Arch/Debian/WSL) differences appropriately.
