@@ -34,7 +34,7 @@ cd ~/projects/configsh
 | **`optional`** *(add-ons)* | Personal machines, homelabs & extras | Non-blocking tools tracked across all modes: `talosctl` (bare-metal/homelab k8s), `glow` (markdown reader), `fastfetch` (system banner). |
 
 > [!NOTE]
-> `./setup.sh` automatically checks for prerequisites tailored to your chosen mode (via [`scripts/check-prerequisites.sh`](scripts/check-prerequisites.sh)). If any required packages are missing, it provides platform-tailored installation commands (`brew`, `pacman`/`paru`, `apt`) and asks for confirmation before proceeding. Pass `-y` or `--yes` to proceed without prompting.
+> `./setup.sh` automatically checks for prerequisites tailored to your chosen mode (via [`scripts/check-prerequisites.sh`](scripts/check-prerequisites.sh)) and automatically fast-forwards the repository to the latest remote commit on execution (pass `--no-pull` to skip). If any required packages are missing, it provides platform-tailored installation commands (`brew`, `pacman`/`paru`, `apt`) and asks for confirmation before proceeding. Pass `-y` or `--yes` to proceed without prompting.
 
 Restart your terminal or run:
 ```bash
