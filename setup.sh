@@ -10,9 +10,15 @@ DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/common.sh
 source "$DOTFILES_DIR/scripts/lib/common.sh" "$@"
 
+# Parse CLI flags & options
+AUTO_PULL=true
+
 # Show usage help if requested
 for arg in "$@"; do
     case "$arg" in
+        --no-pull|--skip-pull)
+            AUTO_PULL=false
+            ;;
         -h|--help)
             echo -e "${BOLD}Usage:${RESET} ./setup.sh [MODE] [OPTIONS]"
             echo ""
@@ -25,6 +31,7 @@ for arg in "$@"; do
             echo -e "${BOLD}Options:${RESET}"
             echo -e "  ${CYAN}-m, --mode=MODE${RESET}   Specify setup mode (minimal, required, full)"
             echo -e "  ${CYAN}-y, --yes${RESET}         Proceed without confirmation prompts"
+            echo -e "  ${CYAN}--no-pull${RESET}         Skip automatic git pull of latest dotfiles"
             echo -e "  ${CYAN}--doctor, --verify${RESET} Run read-only health checks instead of setup"
             echo -e "  ${CYAN}-h, --help${RESET}        Show this help message"
             echo ""
@@ -51,6 +58,44 @@ echo -e "${BOLD}================================================================
 echo -e "Detected OS: ${BOLD}${OS}${RESET}"
 echo -e "Setup Mode:  ${BOLD}${CYAN}${CONFIGSH_MODE}${RESET}"
 echo -e "Dotfiles Directory: ${BOLD}${DOTFILES_DIR}${RESET}\n"
+
+# -----------------------------------------------------------------------------
+# Auto-Update from Remote Repository (Git Pull)
+# -----------------------------------------------------------------------------
+if [ "$AUTO_PULL" = true ] && [ "${_CONFIGSH_ALREADY_PULLED:-0}" != "1" ]; then
+    if [ -d "$DOTFILES_DIR/.git" ] && command -v git &>/dev/null; then
+        if git -C "$DOTFILES_DIR" remote get-url origin &>/dev/null; then
+            if ! git -C "$DOTFILES_DIR" diff-index --quiet HEAD -- 2>/dev/null; then
+                warn "Working tree has uncommitted alterations; skipping auto-update."
+            else
+                current_branch="$(git -C "$DOTFILES_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+                if [ -n "$current_branch" ] && [ "$current_branch" != "HEAD" ]; then
+                    old_rev="$(git -C "$DOTFILES_DIR" rev-parse HEAD 2>/dev/null || true)"
+                    info "Checking for latest dotfiles updates on branch '${current_branch}'..."
+                    set +e
+                    if pull_out="$(git -C "$DOTFILES_DIR" pull --ff-only 2>&1)"; then
+                        new_rev="$(git -C "$DOTFILES_DIR" rev-parse HEAD 2>/dev/null || true)"
+                        if [ -n "$old_rev" ] && [ -n "$new_rev" ] && [ "$old_rev" != "$new_rev" ]; then
+                            success "Repository successfully updated (${old_rev:0:7} -> ${new_rev:0:7})."
+                            info "Reloading setup pipeline with latest updates...\n"
+                            export _CONFIGSH_ALREADY_PULLED=1
+                            exec "$0" "$@"
+                        else
+                            success "Repository is already up to date."
+                        fi
+                    else
+                        warn "Could not fast-forward from origin (offline or branch diverged); continuing with local files."
+                        if [ -n "$pull_out" ]; then
+                            echo -e "     ${YELLOW}↳ ${pull_out}${RESET}"
+                        fi
+                    fi
+                    set -e
+                fi
+            fi
+        fi
+    fi
+    echo ""
+fi
 
 # -----------------------------------------------------------------------------
 # 0. Check Prerequisites
