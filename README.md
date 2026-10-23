@@ -71,8 +71,8 @@ source ~/.zshrc
   * Modern tab completion via **`fzf-tab`** and fuzzy picker (`fzf`) with Gruvbox dark styling and live previews (`eza` for directories, `bat` for files).
   * Interactive text search via **`fif`** (`ripgrep` + `fzf` + `bat` preview with direct editor jumping).
   * Interactive cheatsheet via **`cs`** / **`cheatsheet`** (terminal markdown reader with `glow`).
-  * TUI SSH connection manager via **`sshx`** (`fssh` / `sshx add`: Bubble Tea host browser, Huh adder wizard, key discovery, `ssh-copy-id`).
-  * Git accounts per folder via **`doppel`** (`dop`): a commit identity, SSH auth key and signing key for each account, applied by folder with Git's `includeIf`. Includes an account browser, wizards, GitHub key upload and a `doctor`.
+  * TUI SSH connection manager via **`sshx`** (`fssh` / `sshx add`: Bubble Tea host browser, Huh adder wizard, key discovery, `ssh-copy-id`), with tab completion of host aliases.
+  * Git accounts per folder via **`doppel`** (`dop`): a commit identity, SSH auth key and signing key for each account, applied by folder with Git's `includeIf`. Includes an account browser, wizards, GitHub key upload, a `doctor` and tab completion.
   * History privacy (`HIST_IGNORE_SPACE` — commands starting with a space are never written to disk).
   * Secrets and tool completions (`vault`, `pass`, aliases `v`, `b`, `p`).
   * Local machine configuration integration (`~/.zshrc.local`).

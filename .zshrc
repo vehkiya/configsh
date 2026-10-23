@@ -355,6 +355,12 @@ fi
 
 # sshx: TUI SSH Connection Manager & Host Adder (native compiled utility: ~/.local/bin/sshx)
 alias fssh="sshx"
+# Completion for sshx and fssh: subcommands, flags and host aliases from
+# ~/.ssh/config. Needs compinit (run by Oh My Zsh above); an older sshx without
+# the completion command prints nothing here.
+if (( $+commands[sshx] && $+functions[compdef] )); then
+  source <(sshx completion zsh 2>/dev/null)
+fi
 
 # doppel: Git accounts per folder, with their SSH and signing keys (~/.local/bin/doppel)
 alias dop="doppel"
