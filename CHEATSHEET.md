@@ -62,6 +62,7 @@
 
 * **`sshx [alias]`** *(or `fssh`)* — **TUI SSH Manager**: Connect (<kbd>Enter</kbd>), search (<kbd>/</kbd>), add (<kbd>a</kbd>), edit (<kbd>e</kbd>), copy key (<kbd>c</kbd>), delete (<kbd>d</kbd>)
 * **`sshx add [target] [alias]`** — Guided wizard to configure new host, keys, and auth in `~/.ssh/config`
+* **`sshx <Tab>`** — Complete host aliases and subcommands (also after `rm`, `edit`, `clone`, `probe`, `connect`)
 
 ---
 
