@@ -1,0 +1,7 @@
+# =============================================================================
+# Linux / Wayland (KWin) Overrides
+# =============================================================================
+# 'none' eliminates GTK4's outer CSD shadow margins on Wayland, allowing the
+# background blur to cover the full window edge-to-edge without the inset border.
+# (Ghostty still renders its internal tabs titlebar via gtk-titlebar-style = tabs).
+window-decoration = none

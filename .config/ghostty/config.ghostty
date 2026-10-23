@@ -36,9 +36,10 @@ window-width = 120
 window-height = 40
 
 # Window decoration style:
-# 'none' eliminates GTK4's outer CSD shadow margins on Wayland, allowing the
-# background blur to cover the full window edge-to-edge without the inset border.
-window-decoration = none
+# Default to 'auto' so macOS AppKit properly renders native tabs and titlebar chrome.
+# On Linux Wayland (KWin), setup.sh links config.local which sets 'window-decoration = none'
+# to prevent GTK CSD shadow margins from clipping background blur.
+window-decoration = auto
 
 # Inner breathing room around Starship's Powerline capsules ( ... )
 window-padding-x = 14
@@ -81,3 +82,9 @@ macos-titlebar-style = transparent
 # Enables shell integration and OSC 133 prompt tracking with Starship
 shell-integration = detect
 shell-integration-features = cursor,sudo,title,ssh-env,ssh-terminfo
+
+# =============================================================================
+# Local & Platform Overrides
+# =============================================================================
+# Loads ~/.config/ghostty/config.local if present (symlinked by setup.sh for OS-specific tuning)
+config-file = "?~/.config/ghostty/config.local"

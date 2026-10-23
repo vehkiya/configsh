@@ -131,6 +131,8 @@ if has_ghostty || [ -L "$HOME/.config/ghostty/config" ]; then
     if [ "$OS" = "Darwin" ]; then
         GHOSTTY_MAC_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
         check_symlink "$DOTFILES_DIR/.config/ghostty/config" "$GHOSTTY_MAC_DIR/config"
+    elif [ "$OS" = "Linux" ] && [ -f "$DOTFILES_DIR/.config/ghostty/config.linux" ]; then
+        check_symlink "$DOTFILES_DIR/.config/ghostty/config.linux" "$HOME/.config/ghostty/config.local"
     fi
 elif is_wsl; then
     doctor_info "Ghostty: Skipped (running in WSL; Windows host terminal used)"
