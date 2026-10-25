@@ -37,8 +37,8 @@ window-height = 40
 
 # Window decoration style:
 # Default to 'auto' so macOS AppKit properly renders native tabs and titlebar chrome.
-# On Linux Wayland (KWin), setup.sh links config.local which sets 'window-decoration = none'
-# to prevent GTK CSD shadow margins from clipping background blur.
+# On Linux Wayland (KWin), setup.sh links config.local which sets 'window-decoration = client'
+# to keep the integrated tabs titlebar and resize handles under KWin.
 window-decoration = auto
 
 # Inner breathing room around Starship's Powerline capsules ( ... )
