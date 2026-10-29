@@ -34,12 +34,12 @@ sha256_of() {
     fi
 }
 
-# install_tool NAME VERSION: installs github.com/vehkiya/NAME into $BIN_DIR.
+# install_tool NAME VERSION: installs github.com/hononeko/NAME into $BIN_DIR.
 # Prefers go install, and falls back to the precompiled GitHub Release binary,
 # checking it against the release's SHA-256 checksums. VERSION is "latest" or
 # a release tag such as v0.5.0.
 install_tool() {
-    local name="$1" version="$2" repo="vehkiya/$1"
+    local name="$1" version="$2" repo="hononeko/$1"
 
     if command -v go &>/dev/null; then
         info "Installing $name via go install github.com/$repo@${version}..."
@@ -89,7 +89,7 @@ install_tool() {
     fi
 }
 
-# update_or_install_tool NAME VERSION: installs github.com/vehkiya/NAME
+# update_or_install_tool NAME VERSION: installs github.com/hononeko/NAME
 # into $BIN_DIR if it is not already installed. If it is already installed,
 # runs its self-update command (`NAME update`) instead.
 update_or_install_tool() {
@@ -110,13 +110,13 @@ update_or_install_tool() {
 }
 
 # -----------------------------------------------------------------------------
-# 1. Install or update sshx (https://github.com/vehkiya/sshx), the SSH host manager.
+# 1. Install or update sshx (https://github.com/hononeko/sshx), the SSH host manager.
 # Set SSHX_VERSION (e.g. v0.5.0) to pin a release instead of tracking latest.
 # -----------------------------------------------------------------------------
 update_or_install_tool sshx "${SSHX_VERSION:-latest}"
 
 # -----------------------------------------------------------------------------
-# 2. Install or update doppel (https://github.com/vehkiya/doppel), Git accounts per folder.
+# 2. Install or update doppel (https://github.com/hononeko/doppel), Git accounts per folder.
 # Set DOPPEL_VERSION (e.g. v0.5.0) to pin a release instead of tracking latest.
 # -----------------------------------------------------------------------------
 update_or_install_tool doppel "${DOPPEL_VERSION:-latest}"
